@@ -65,6 +65,18 @@ module "rds" {
   tags            = local.tags
 }
 
+// Skipped by default per the plan's cost guidance — only stand this up when the
+// caching behavior (Add-on B) is specifically being demoed.
+module "redis" {
+  count          = var.enable_redis_cache ? 1 : 0
+  source         = "../../modules/elasticache"
+  name           = local.name
+  vpc_id         = module.vpc.vpc_id
+  subnet_ids     = module.vpc.public_subnet_ids
+  vpc_cidr_block = var.vpc_cidr_block
+  tags           = local.tags
+}
+
 module "api" {
   source           = "../../modules/ecs-service"
   name             = "${local.name}-api"
@@ -78,17 +90,20 @@ module "api" {
   # NOTE: the DB password is interpolated into a plain environment variable here for
   # brevity. Before a real deploy, switch this to the ECS task definition's `secrets`
   # field pulling from module.secrets so the password never lands in plan/state output.
-  environment = {
-    ASPNETCORE_ENVIRONMENT               = "Staging"
-    "ConnectionStrings__Tickets"         = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
-    "ConnectionStrings__Triage"          = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
-    "ConnectionStrings__Identity"        = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
-    "Sqs__Queues__TicketsInbox"          = module.sqs.queue_urls["tickets-inbox"]
-    "Sqs__Queues__TriageInbox"           = module.sqs.queue_urls["triage-inbox"]
-    "Sqs__Routes__TicketCreated__0"      = module.sqs.queue_urls["triage-inbox"]
-    "Sqs__Routes__TicketTriaged__0"      = module.sqs.queue_urls["tickets-inbox"]
-    "Sqs__Routes__TicketTriageFailed__0" = module.sqs.queue_urls["tickets-inbox"]
-  }
+  environment = merge(
+    {
+      ASPNETCORE_ENVIRONMENT               = "Staging"
+      "ConnectionStrings__Tickets"         = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
+      "ConnectionStrings__Triage"          = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
+      "ConnectionStrings__Identity"        = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
+      "Sqs__Queues__TicketsInbox"          = module.sqs.queue_urls["tickets-inbox"]
+      "Sqs__Queues__TriageInbox"           = module.sqs.queue_urls["triage-inbox"]
+      "Sqs__Routes__TicketCreated__0"      = module.sqs.queue_urls["triage-inbox"]
+      "Sqs__Routes__TicketTriaged__0"      = module.sqs.queue_urls["tickets-inbox"]
+      "Sqs__Routes__TicketTriageFailed__0" = module.sqs.queue_urls["tickets-inbox"]
+    },
+    var.enable_redis_cache ? { "ConnectionStrings__Redis" = "${module.redis[0].primary_endpoint}:${module.redis[0].port}" } : {}
+  )
 
   secret_arns    = values(module.secrets.secret_arns)
   sqs_queue_arns = values(module.sqs.queue_arns)

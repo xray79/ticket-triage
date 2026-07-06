@@ -7,9 +7,10 @@ reply — shows up on the ticket with the provider that produced it clearly labe
 
 Built as a .NET 8 modular monolith + Angular frontend, following the staged delivery
 plan in [`docs/architecture-plan.md`](docs/architecture-plan.md). **Stage 0 (the MVP)
-is complete**, plus depth from **Add-on A** (multi-provider resilience: bulkhead
-concurrency limiting, per-provider telemetry, per-user provider preference, org-wide
-force-local-only policy) — see the plan for what's still optional.
+is complete**, plus **Add-on A** (multi-provider resilience: bulkhead concurrency
+limiting, per-provider telemetry, per-user provider preference, org-wide force-local-only
+policy) and **Add-on B** (OpenTelemetry tracing/metrics, security headers, Redis-backed
+triage result caching with an in-memory fallback) — see the plan for what's still optional.
 
 ## Architecture
 
@@ -138,7 +139,7 @@ cleanly at container startup rather than passing) — it should run in any envir
 with normal Docker Hub access, including GitHub Actions, but wasn't seen green in this
 session.
 
-## What's implemented (Stage 0 + Add-on A) vs. what's a documented follow-up
+## What's implemented (Stage 0 + Add-on A + Add-on B) vs. what's a documented follow-up
 
 **Implemented and verified working end-to-end** (see the ADRs and the plan for
 detail): login/JWT/refresh with role+permission-based authorization, ticket
@@ -156,11 +157,27 @@ development, not just unit-tested.
 total concurrent triage calls across every provider (so a ticket burst can't
 starve the local GPU or the API's thread pool); per-provider telemetry counters/
 histograms (`triage.attempts`, `triage.duration`, tagged by provider/fallback/
-outcome) via `System.Diagnostics.Metrics` — exported once Add-on B wires an
-OpenTelemetry reader; per-user provider preference and an Admin-only org-wide
-force-local-only policy, both live-verified end-to-end (preference persists and
-is honored on ticket creation; org policy correctly overrides a user's cloud
-preference) through the API and the new Angular settings pages.
+outcome) via `System.Diagnostics.Metrics`; per-user provider preference and an
+Admin-only org-wide force-local-only policy, both live-verified end-to-end
+(preference persists and is honored on ticket creation; org policy correctly
+overrides a user's cloud preference) through the API and the new Angular
+settings pages.
+
+**Add-on B (observability + hardening):** OpenTelemetry tracing (ASP.NET Core +
+HttpClient + EF Core spans, including `TriageMetrics`' counters as an OTel
+meter) exporting to the console locally or an OTLP collector when configured —
+live-verified: real trace spans (including the EF Core `ticket_triage` DB span)
+appear in the console during a live run; a `SecurityHeadersMiddleware` adding
+CSP/X-Frame-Options/X-Content-Type-Options/Referrer-Policy/HSTS, live-verified
+via response headers, with a relaxed CSP in Development only so Swagger UI's
+inline assets still work; Redis-backed caching of triage results keyed on the
+already-redacted ticket text (so a duplicate ticket skips a redundant LLM
+call), falling back to an in-memory `IDistributedCache` when no Redis
+connection string is configured — verified via unit tests against both the
+cache contract and the in-memory implementation (no live Redis in this
+sandbox); the Redis health check registers itself only when Redis is actually
+configured, also live-verified (absent from `/health/ready` here, as
+expected).
 
 **Documented but not exercised in this environment:** the Terraform modules are
 written and pass `terraform fmt`/HCL review, but `terraform validate`/`plan`/`apply`

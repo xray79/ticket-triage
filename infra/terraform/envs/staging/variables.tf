@@ -27,3 +27,9 @@ variable "db_master_password" {
   type      = string
   sensitive = true
 }
+
+variable "enable_redis_cache" {
+  type        = bool
+  default     = false
+  description = "Skip by default per the plan's cost guidance; enable only when demoing the caching behavior specifically."
+}

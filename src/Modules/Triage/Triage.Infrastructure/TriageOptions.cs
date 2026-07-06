@@ -9,6 +9,13 @@ public sealed class TriageOptions
     public OpenAiOptions OpenAi { get; set; } = new();
     public AnthropicOptions Anthropic { get; set; } = new();
     public GeminiOptions Gemini { get; set; } = new();
+    public CacheOptions Cache { get; set; } = new();
+
+    public sealed class CacheOptions
+    {
+        /// <summary>How long a triage result for a given masked ticket text stays cached.</summary>
+        public int TtlHours { get; set; } = 24;
+    }
 
     public sealed class PresidioOptions
     {
