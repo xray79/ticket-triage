@@ -114,6 +114,8 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();
 app.MapTicketsEndpoints();
+app.MapUserPreferencesEndpoints();
+app.MapOrgSettingsEndpoints();
 
 app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {

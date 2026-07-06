@@ -13,6 +13,12 @@ public interface IUserRegistrationService
     Task<Shared.Kernel.Result<Guid>> CreateAsync(string email, string password, string displayName, string role, CancellationToken ct);
 }
 
+public interface IUserPreferenceService
+{
+    Task<Shared.Kernel.Result<string>> GetProviderPreferenceAsync(Guid userId, CancellationToken ct);
+    Task<Shared.Kernel.Result> SetProviderPreferenceAsync(Guid userId, string providerPreference, CancellationToken ct);
+}
+
 public interface ITokenService
 {
     (string AccessToken, DateTimeOffset ExpiresAtUtc) GenerateAccessToken(UserAccountDto user);

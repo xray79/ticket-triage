@@ -21,4 +21,11 @@ public sealed class PermissionsTests
         Permissions.ByRole[Roles.Agent].Should().NotContain(Permissions.ManageUsers);
         Permissions.ByRole[Roles.Admin].Should().Contain(Permissions.ManageUsers);
     }
+
+    [Fact]
+    public void Only_Admin_can_manage_org_settings()
+    {
+        Permissions.ByRole[Roles.Agent].Should().NotContain(Permissions.ManageOrgSettings);
+        Permissions.ByRole[Roles.Admin].Should().Contain(Permissions.ManageOrgSettings);
+    }
 }
