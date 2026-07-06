@@ -15,8 +15,10 @@ Reporting modules), **Add-on D** (a live-verified WCAG 2.1 AA accessibility pass
 ADRs, and presentation polish), stretch stage **S1** (Triage extracted into its own
 deployable, `src/TriageService/TriageService.Host` — see ADR 006), and stretch stage
 **S2** (an LLM eval harness, `tools/Triage.Eval`, scoring fixed sample tickets for
-category/priority/summary quality per provider) — see the plan for what's still
-optional (stretch stages S3–S7).
+category/priority/summary quality per provider), and stretch stage **S3** (a
+concurrent-ingestion load test — see
+[`docs/load-test-report.md`](docs/load-test-report.md)) — see the plan for what's
+still optional (stretch stages S4–S7).
 
 ## Architecture
 
@@ -107,6 +109,7 @@ project or async domain events — never another module's `Domain`/`Application`
   /ArchitectureTests      NetArchTest — module boundary + framework-purity rules
   /IntegrationTests       WebApplicationFactory + Testcontainers (scaffolded, see below)
 /tools/Triage.Eval      LLM eval harness — fixed sample tickets scored per provider (S2)
+/loadtest               Concurrent ticket-ingestion load test (S3, see docs/load-test-report.md)
 /frontend/apps/agent-console   Angular 18 standalone app (signals, no NgRx)
 /infra/terraform        Per-environment AWS infra (VPC, ECS Fargate, RDS, SQS, S3/CloudFront)
 /infra/localstack       SQS queue bootstrap script for local dev
@@ -303,6 +306,18 @@ pattern used for the Testcontainers integration tests below; the CI workflow its
 wasn't run live here since this sandbox's egress policy blocks pulling the
 `ollama/ollama` image.
 
+**Stretch stage S3 (load test):** [`loadtest/ticket-ingestion.js`](loadtest/ticket-ingestion.js)
+(autocannon — k6 itself isn't installable here, see `loadtest/README.md`) drove real
+concurrent load at `POST /api/tickets` against a locally-running Host, at 5/20/50/100
+concurrent connections. **Finding:** the per-IP rate limiter (100 req/min, no queueing)
+trips almost immediately under any sustained concurrent traffic — latency stayed in
+single-digit milliseconds throughout, because the limiter rejects a request in-process
+before it ever reaches the database. Full write-up, numbers, root cause, and the fix
+I'd make (partition the limiter by authenticated user instead of IP for authenticated
+routes) in [`docs/load-test-report.md`](docs/load-test-report.md), including a second,
+incidental finding about the outbox dispatcher's unbounded retry-with-no-backoff
+behavior observed during the same run.
+
 **Documented but not exercised in this environment:** the Terraform modules are
 written and pass `terraform fmt`/HCL review, but `terraform validate`/`plan`/`apply`
 were not run here (the sandbox's egress policy blocks the Terraform Registry and
@@ -312,7 +327,11 @@ The async SQS-triggered paths for Notifications/Reporting/Triage caching couldn'
 be driven end-to-end here (LocalStack/SQS isn't reachable in this sandbox, same
 limitation as Stage 0) — covered by unit tests instead of a live run. The eval
 harness's CI workflow (`triage-eval.yml`) wasn't run live for the same
-Docker-image-pull reason. Stretch stages S3–S7 are not started.
+Docker-image-pull reason. The load test could only exercise the synchronous ticket-
+creation path — SQS queue depth, Ollama latency under concurrency, and the cloud
+provider circuit breaker weren't observable here for the same reasons (see
+`docs/load-test-report.md`'s "Scope and limitations"). Stretch stages S4–S7 are not
+started.
 
 ## ADRs
 
