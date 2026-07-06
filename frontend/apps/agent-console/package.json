@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --karma-config karma.conf.js",
-    "lint": "eslint \"src/**/*.{ts,html}\""
+    "lint": "eslint \"src/**/*.{ts,html}\"",
+    "e2e": "playwright test"
   },
   "private": true,
   "dependencies": {
@@ -32,6 +33,8 @@
     "@angular-eslint/template-parser": "^18.4.3",
     "@angular/cli": "^18.2.21",
     "@angular/compiler-cli": "^18.2.0",
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
