@@ -16,6 +16,12 @@ public static class TriagePrompt
           "summary": "<one sentence>", "draftReply": "<a short, polite first-response draft>"}
         """;
 
+    private static readonly HashSet<string> ValidCategories =
+        new(StringComparer.OrdinalIgnoreCase) { "billing", "technical", "account", "general" };
+
+    private static readonly HashSet<string> ValidPriorities =
+        new(StringComparer.OrdinalIgnoreCase) { "low", "medium", "high", "urgent" };
+
     public static string Build(TicketContent ticket) =>
         $"{Instructions}\n\nSubject: {ticket.Subject}\nBody: {ticket.Body}";
 
@@ -30,11 +36,18 @@ public static class TriagePrompt
         var parsed = JsonSerializer.Deserialize<TriageJson>(jsonSlice)
             ?? throw new InvalidOperationException("Could not parse the provider's triage JSON.");
 
-        return new TriageResult(
-            parsed.Category ?? "general",
-            parsed.Priority ?? "medium",
-            parsed.Summary ?? string.Empty,
-            parsed.DraftReply ?? string.Empty);
+        // A prompt-injected or malfunctioning model can return a category/priority outside the
+        // fixed vocabulary it was asked for — never trust it as-is, since it flows straight into
+        // reporting breakdowns and UI badges that assume one of these four values each. See
+        // docs/threat-model-ai-boundary.md.
+        var category = parsed.Category is not null && ValidCategories.Contains(parsed.Category)
+            ? parsed.Category.ToLowerInvariant()
+            : "general";
+        var priority = parsed.Priority is not null && ValidPriorities.Contains(parsed.Priority)
+            ? parsed.Priority.ToLowerInvariant()
+            : "medium";
+
+        return new TriageResult(category, priority, parsed.Summary ?? string.Empty, parsed.DraftReply ?? string.Empty);
     }
 
     private sealed record TriageJson(
