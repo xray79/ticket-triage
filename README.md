@@ -12,9 +12,11 @@ limiting, per-provider telemetry, per-user provider preference, org-wide force-l
 policy), **Add-on B** (OpenTelemetry tracing/metrics, security headers, Redis-backed
 triage result caching with an in-memory fallback), **Add-on C** (Notifications and
 Reporting modules), **Add-on D** (a live-verified WCAG 2.1 AA accessibility pass,
-ADRs, and presentation polish), and stretch stage **S1** (Triage extracted into its
-own deployable, `src/TriageService/TriageService.Host` — see ADR 006) — see the plan
-for what's still optional (stretch stages S2–S7).
+ADRs, and presentation polish), stretch stage **S1** (Triage extracted into its own
+deployable, `src/TriageService/TriageService.Host` — see ADR 006), and stretch stage
+**S2** (an LLM eval harness, `tools/Triage.Eval`, scoring fixed sample tickets for
+category/priority/summary quality per provider) — see the plan for what's still
+optional (stretch stages S3–S7).
 
 ## Architecture
 
@@ -104,6 +106,7 @@ project or async domain events — never another module's `Domain`/`Application`
   /UnitTests             xUnit + NSubstitute + FluentAssertions
   /ArchitectureTests      NetArchTest — module boundary + framework-purity rules
   /IntegrationTests       WebApplicationFactory + Testcontainers (scaffolded, see below)
+/tools/Triage.Eval      LLM eval harness — fixed sample tickets scored per provider (S2)
 /frontend/apps/agent-console   Angular 18 standalone app (signals, no NgRx)
 /infra/terraform        Per-environment AWS infra (VPC, ECS Fargate, RDS, SQS, S3/CloudFront)
 /infra/localstack       SQS queue bootstrap script for local dev
@@ -154,13 +157,34 @@ npm start
 # Backend
 dotnet test tests/ArchitectureTests
 dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests \
-  tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests
+  tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests tests/UnitTests/Triage.Eval.Tests
 
 # Frontend
 cd frontend/apps/agent-console
 npm run lint
 npm run test:ci
 ```
+
+### Triage eval harness (stretch stage S2)
+
+`tools/Triage.Eval` runs ~30 fixed sample tickets (`tools/Triage.Eval/samples.json`, 8 per
+category across billing/technical/account/general with a mixed priority spread) through a real
+provider and scores category/priority accuracy plus a summary-keyword-overlap heuristic, exiting
+non-zero if any threshold isn't met:
+
+```bash
+dotnet run --project tools/Triage.Eval -- --provider local   # or openai / anthropic / gemini
+```
+
+`tests/UnitTests/Triage.Eval.Tests` covers the scoring math and sample-data quality (unique IDs,
+valid categories/priorities, every category represented) without needing a live LLM call.
+`.github/workflows/triage-eval.yml` runs it against a real Ollama on `workflow_dispatch` or
+whenever the prompt/provider code changes — not part of the required `ci.yml` gate, since pulling
+a model on every push is too slow/costly for that. This sandbox's egress policy blocks pulling
+the `ollama/ollama` image, so the workflow was written and reviewed but not executed live here;
+the tool itself was run against `--provider local` here and confirmed to load all 32 samples and
+fail cleanly at the expected boundary (connection refused — no Ollama in this sandbox), the same
+verified-failure-mode pattern used for the Testcontainers integration tests below.
 
 `tests/IntegrationTests/Tickets.IntegrationTests` boots the real Host via
 `WebApplicationFactory` against a Testcontainers Postgres instance and drives real HTTP
@@ -263,6 +287,22 @@ the main Host still creates tickets end-to-end (201) with `triage-db` correctly
 absent from its own `/health/ready` — all 62 architecture tests and 119 unit tests
 still pass with the module boundary unchanged.
 
+**Stretch stage S2 (LLM eval harness):** `tools/Triage.Eval` runs 32 fixed sample
+tickets (8 each across billing/technical/account/general, mixed priorities) through
+a real `ITriageLlmClient` and scores category accuracy, priority accuracy, and a
+summary-keyword-overlap heuristic, exiting non-zero if any threshold isn't met — a
+regression suite for AI output quality, not just a demo you eyeball once.
+`tests/UnitTests/Triage.Eval.Tests` (15 tests) covers the scoring math and the
+sample data's own integrity (unique IDs, valid category/priority vocabulary, every
+category represented) independent of any live LLM call, and
+`.github/workflows/triage-eval.yml` runs the harness against a real Ollama on
+`workflow_dispatch` or whenever the prompt/provider code changes. Live-verified
+here: the tool loads all 32 samples and reaches the network call before failing at
+the expected boundary (no Ollama in this sandbox) — the same verified-failure-mode
+pattern used for the Testcontainers integration tests below; the CI workflow itself
+wasn't run live here since this sandbox's egress policy blocks pulling the
+`ollama/ollama` image.
+
 **Documented but not exercised in this environment:** the Terraform modules are
 written and pass `terraform fmt`/HCL review, but `terraform validate`/`plan`/`apply`
 were not run here (the sandbox's egress policy blocks the Terraform Registry and
@@ -270,8 +310,9 @@ container registries) — review before a real `apply`. Multi-provider cloud tri
 (OpenAI/Anthropic/Gemini) is implemented but untested against live provider APIs.
 The async SQS-triggered paths for Notifications/Reporting/Triage caching couldn't
 be driven end-to-end here (LocalStack/SQS isn't reachable in this sandbox, same
-limitation as Stage 0) — covered by unit tests instead of a live run. Stretch
-stages S2–S7 are not started.
+limitation as Stage 0) — covered by unit tests instead of a live run. The eval
+harness's CI workflow (`triage-eval.yml`) wasn't run live for the same
+Docker-image-pull reason. Stretch stages S3–S7 are not started.
 
 ## ADRs
 
