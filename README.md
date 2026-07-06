@@ -129,9 +129,13 @@ npm run lint
 npm run test:ci
 ```
 
-`tests/IntegrationTests/Tickets.IntegrationTests` is scaffolded (WebApplicationFactory
-+ Testcontainers dependencies wired) but doesn't have real test cases yet — it's the
-next thing to fill in, not something CI currently runs.
+`tests/IntegrationTests/Tickets.IntegrationTests` boots the real Host via
+`WebApplicationFactory` against a Testcontainers Postgres instance and drives real HTTP
+requests through auth + MediatR + EF Core + the outbox. It compiles and its failure mode
+was verified here (Docker image pulls are policy-blocked in this sandbox, so it fails
+cleanly at container startup rather than passing) — it should run in any environment
+with normal Docker Hub access, including GitHub Actions, but wasn't seen green in this
+session.
 
 ## What's implemented (Stage 0) vs. what's a documented follow-up
 
