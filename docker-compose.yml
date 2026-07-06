@@ -73,31 +73,52 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Tickets: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
-      ConnectionStrings__Triage: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
       ConnectionStrings__Identity: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
       ConnectionStrings__Notifications: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
       ConnectionStrings__Reporting: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
       ConnectionStrings__Redis: "redis:6379"
       Sqs__ServiceUrl: "http://localstack:4566"
       Sqs__Queues__TicketsInbox: "http://localstack:4566/000000000000/tickets-inbox"
-      Sqs__Queues__TriageInbox: "http://localstack:4566/000000000000/triage-inbox"
       Sqs__Queues__NotificationsInbox: "http://localstack:4566/000000000000/notifications-inbox"
       Sqs__Queues__ReportingInbox: "http://localstack:4566/000000000000/reporting-inbox"
       Sqs__Routes__TicketCreated__0: "http://localstack:4566/000000000000/triage-inbox"
       Sqs__Routes__TicketCreated__1: "http://localstack:4566/000000000000/reporting-inbox"
+      Sqs__Routes__TicketResolved__0: "http://localstack:4566/000000000000/notifications-inbox"
+      Sqs__Routes__TicketResolved__1: "http://localstack:4566/000000000000/reporting-inbox"
+      Jwt__SigningKey: "mTkw/iHdsgSW/LLdH0VIh2/0qk7MY2zDdBk5TqXcKKI="
+      Identity__SeedAdmin__Email: "admin@ticket-triage.local"
+      Identity__SeedAdmin__Password: "ChangeMe123!"
+      Cors__AllowedOrigins__0: "http://localhost:4200"
+
+  triage-service:
+    build:
+      context: .
+      dockerfile: src/TriageService/TriageService.Host/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      presidio-analyzer:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Triage: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
+      ConnectionStrings__Redis: "redis:6379"
+      Otel__ServiceName: "TicketTriage.TriageService"
+      Sqs__ServiceUrl: "http://localstack:4566"
+      Sqs__Queues__TriageInbox: "http://localstack:4566/000000000000/triage-inbox"
       Sqs__Routes__TicketTriaged__0: "http://localstack:4566/000000000000/tickets-inbox"
       Sqs__Routes__TicketTriaged__1: "http://localstack:4566/000000000000/notifications-inbox"
       Sqs__Routes__TicketTriaged__2: "http://localstack:4566/000000000000/reporting-inbox"
       Sqs__Routes__TicketTriageFailed__0: "http://localstack:4566/000000000000/tickets-inbox"
       Sqs__Routes__TicketTriageFailed__1: "http://localstack:4566/000000000000/reporting-inbox"
-      Sqs__Routes__TicketResolved__0: "http://localstack:4566/000000000000/notifications-inbox"
-      Sqs__Routes__TicketResolved__1: "http://localstack:4566/000000000000/reporting-inbox"
       Triage__Presidio__BaseUrl: "http://presidio-analyzer:3000"
       Triage__Ollama__BaseUrl: "http://ollama:11434"
-      Jwt__SigningKey: "mTkw/iHdsgSW/LLdH0VIh2/0qk7MY2zDdBk5TqXcKKI="
-      Identity__SeedAdmin__Email: "admin@ticket-triage.local"
-      Identity__SeedAdmin__Password: "ChangeMe123!"
-      Cors__AllowedOrigins__0: "http://localhost:4200"
 
   frontend:
     build:
