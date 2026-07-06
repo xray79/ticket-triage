@@ -1,0 +1,28 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Commit SHA (or tag) already promoted through staging'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production # GitHub Environment with required reviewers configured
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform apply (prod)
+        working-directory: infra/terraform/envs/prod
+        run: |
+          terraform init
+          terraform apply -auto-approve -var="image_tag=${{ inputs.image_tag }}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Smoke test + health check
+        run: curl -sf "${{ vars.PROD_API_URL }}/health/ready"

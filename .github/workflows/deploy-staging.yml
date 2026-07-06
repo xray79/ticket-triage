@@ -1,0 +1,31 @@
+name: Deploy Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Commit SHA (or tag) of the image already built by CI'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging # GitHub Environment with required reviewers configured
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform apply (staging)
+        working-directory: infra/terraform/envs/staging
+        run: |
+          terraform init
+          terraform apply -auto-approve -var="image_tag=${{ inputs.image_tag }}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Smoke test + health check
+        run: curl -sf "${{ vars.STAGING_API_URL }}/health/ready"
+
+      # Automatic rollback on health check failure would re-apply the previous
+      # image_tag here; omitted until a real staging environment exists to test against.

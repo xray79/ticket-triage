@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ticket_triage
+      POSTGRES_PASSWORD: ticket_triage
+      POSTGRES_DB: ticket_triage
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticket_triage"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  localstack:
+    image: localstack/localstack:3.8
+    environment:
+      SERVICES: sqs,secretsmanager
+      DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - ./infra/localstack/init-sqs.sh:/etc/localstack/init/ready.d/init-sqs.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    # Pulls the triage model on first start; a no-op if it's already present.
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama serve & sleep 3 && ollama pull llama3.1 && wait"
+
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    ports:
+      - "5002:3000"
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Host/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Tickets: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
+      ConnectionStrings__Triage: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
+      ConnectionStrings__Identity: "Host=postgres;Port=5432;Database=ticket_triage;Username=ticket_triage;Password=ticket_triage"
+      Sqs__ServiceUrl: "http://localstack:4566"
+      Sqs__Queues__TicketsInbox: "http://localstack:4566/000000000000/tickets-inbox"
+      Sqs__Queues__TriageInbox: "http://localstack:4566/000000000000/triage-inbox"
+      Sqs__Routes__TicketCreated__0: "http://localstack:4566/000000000000/triage-inbox"
+      Sqs__Routes__TicketTriaged__0: "http://localstack:4566/000000000000/tickets-inbox"
+      Sqs__Routes__TicketTriageFailed__0: "http://localstack:4566/000000000000/tickets-inbox"
+      Triage__Presidio__BaseUrl: "http://presidio-analyzer:3000"
+      Triage__Ollama__BaseUrl: "http://ollama:11434"
+      Jwt__SigningKey: "mTkw/iHdsgSW/LLdH0VIh2/0qk7MY2zDdBk5TqXcKKI="
+      Identity__SeedAdmin__Email: "admin@ticket-triage.local"
+      Identity__SeedAdmin__Password: "ChangeMe123!"
+      Cors__AllowedOrigins__0: "http://localhost:4200"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: apps/agent-console/Dockerfile
+    ports:
+      - "4200:4200"
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:
+  localstack-data:
+  ollama-data:

@@ -1,0 +1,14 @@
+@if (auth.isAuthenticated()) {
+  <nav class="topnav" aria-label="Primary">
+    <a routerLink="/tickets" class="topnav__brand">Ticket Triage</a>
+    <div class="topnav__links">
+      @if (auth.hasPermission('users:manage')) {
+        <a routerLink="/admin/users">Users</a>
+      }
+      <span class="topnav__user">{{ auth.displayName() }}</span>
+      <button type="button" (click)="logout()">Sign out</button>
+    </div>
+  </nav>
+}
+
+<router-outlet />
