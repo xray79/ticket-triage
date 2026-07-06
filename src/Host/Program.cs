@@ -28,7 +28,7 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration);
 builder.Services.AddTicketsApplication();
 builder.Services.AddTicketsInfrastructure(builder.Configuration);
 
-builder.Services.AddTriageApplication();
+builder.Services.AddTriageApplication(builder.Configuration);
 builder.Services.AddTriageInfrastructure(builder.Configuration);
 
 builder.Services.AddSqsMessaging(builder.Configuration);
