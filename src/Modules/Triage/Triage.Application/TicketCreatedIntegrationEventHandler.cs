@@ -80,7 +80,20 @@ public sealed class TicketCreatedIntegrationEventHandler : IIntegrationEventHand
                 integrationEvent.CustomerEmail);
 
             _repository.Add(record);
-            await _unitOfWork.SaveChangesAsync(ct);
+
+            // The ExistsForTicketAsync check above only narrows the window — it can't close a
+            // race between two workers both processing a redelivered TicketCreated concurrently
+            // (see docs/concurrency/001-redelivered-ticket-created-race.md). The unique index on
+            // (TicketId, Succeeded) is what actually closes it: if another worker's insert won,
+            // this one fails here, and that's expected, not an error — the ticket is already
+            // correctly triaged by the worker that got there first.
+            if (!await _unitOfWork.TrySaveChangesAsync(ct))
+            {
+                _logger.LogInformation(
+                    "Another worker already recorded a successful triage for ticket {TicketId} first " +
+                    "(redelivery race) — discarding this attempt's result as a safe no-op.",
+                    integrationEvent.TicketId);
+            }
         }
         catch (Exception ex)
         {
