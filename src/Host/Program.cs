@@ -5,7 +5,6 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Host.Endpoints;
 using Host.Middleware;
-using Host.Telemetry;
 using Identity.Application;
 using Identity.Infrastructure;
 using Notifications.Application;
@@ -14,10 +13,9 @@ using Reporting.Application;
 using Reporting.Infrastructure;
 using Shared.Infrastructure.Caching;
 using Shared.Infrastructure.Messaging;
+using Shared.Infrastructure.Telemetry;
 using Tickets.Application;
 using Tickets.Infrastructure;
-using Triage.Application;
-using Triage.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,9 +31,6 @@ builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
 builder.Services.AddTicketsApplication();
 builder.Services.AddTicketsInfrastructure(builder.Configuration);
-
-builder.Services.AddTriageApplication(builder.Configuration);
-builder.Services.AddTriageInfrastructure(builder.Configuration);
 
 builder.Services.AddNotificationsApplication();
 builder.Services.AddNotificationsInfrastructure(builder.Configuration);
@@ -74,7 +69,6 @@ builder.Services.AddRateLimiter(options =>
 
 var healthChecksBuilder = builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Tickets")!, name: "tickets-db")
-    .AddNpgSql(builder.Configuration.GetConnectionString("Triage")!, name: "triage-db")
     .AddNpgSql(builder.Configuration.GetConnectionString("Identity")!, name: "identity-db")
     .AddNpgSql(builder.Configuration.GetConnectionString("Notifications")!, name: "notifications-db")
     .AddNpgSql(builder.Configuration.GetConnectionString("Reporting")!, name: "reporting-db");
@@ -111,7 +105,6 @@ var app = builder.Build();
 using (var migrationScope = app.Services.CreateScope())
 {
     await migrationScope.ServiceProvider.GetRequiredService<TicketsDbContext>().Database.MigrateAsync();
-    await migrationScope.ServiceProvider.GetRequiredService<TriageDbContext>().Database.MigrateAsync();
     await migrationScope.ServiceProvider.GetRequiredService<IdentityDbContext>().Database.MigrateAsync();
     await migrationScope.ServiceProvider.GetRequiredService<NotificationsDbContext>().Database.MigrateAsync();
     await migrationScope.ServiceProvider.GetRequiredService<ReportingDbContext>().Database.MigrateAsync();
