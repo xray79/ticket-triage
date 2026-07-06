@@ -7,8 +7,9 @@ reply — shows up on the ticket with the provider that produced it clearly labe
 
 Built as a .NET 8 modular monolith + Angular frontend, following the staged delivery
 plan in [`docs/architecture-plan.md`](docs/architecture-plan.md). **Stage 0 (the MVP)
-is complete and is what's described below** — see that plan for the optional add-on
-and stretch stages.
+is complete**, plus depth from **Add-on A** (multi-provider resilience: bulkhead
+concurrency limiting, per-provider telemetry, per-user provider preference, org-wide
+force-local-only policy) — see the plan for what's still optional.
 
 ## Architecture
 
@@ -137,7 +138,7 @@ cleanly at container startup rather than passing) — it should run in any envir
 with normal Docker Hub access, including GitHub Actions, but wasn't seen green in this
 session.
 
-## What's implemented (Stage 0) vs. what's a documented follow-up
+## What's implemented (Stage 0 + Add-on A) vs. what's a documented follow-up
 
 **Implemented and verified working end-to-end** (see the ADRs and the plan for
 detail): login/JWT/refresh with role+permission-based authorization, ticket
@@ -150,6 +151,16 @@ checks, correlation IDs, rate limiting, CORS, structured logging, and the Angula
 console (login, queue, ticket detail with triage/provider badges, admin user
 creation) — all driven through a real browser against the real API during
 development, not just unit-tested.
+
+**Add-on A (multi-provider + resilience depth):** a shared Polly bulkhead limits
+total concurrent triage calls across every provider (so a ticket burst can't
+starve the local GPU or the API's thread pool); per-provider telemetry counters/
+histograms (`triage.attempts`, `triage.duration`, tagged by provider/fallback/
+outcome) via `System.Diagnostics.Metrics` — exported once Add-on B wires an
+OpenTelemetry reader; per-user provider preference and an Admin-only org-wide
+force-local-only policy, both live-verified end-to-end (preference persists and
+is honored on ticket creation; org policy correctly overrides a user's cloud
+preference) through the API and the new Angular settings pages.
 
 **Documented but not exercised in this environment:** the Terraform modules are
 written and pass `terraform fmt`/HCL review, but `terraform validate`/`plan`/`apply`
