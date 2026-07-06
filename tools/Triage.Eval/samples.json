@@ -1,0 +1,258 @@
+[
+  {
+    "id": "billing-01",
+    "subject": "Charged twice for my subscription",
+    "body": "I was billed $49.99 two times this month for the same Pro plan subscription. Can you refund the duplicate charge?",
+    "expectedCategory": "billing",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["duplicate", "charge", "refund"]
+  },
+  {
+    "id": "billing-02",
+    "subject": "URGENT: card declined and account about to be suspended",
+    "body": "Your system says my card was declined and my account will be suspended in 24 hours, but I have plenty of funds. This is blocking my whole team from working today.",
+    "expectedCategory": "billing",
+    "expectedPriority": "urgent",
+    "summaryKeywords": ["card", "declined", "suspend"]
+  },
+  {
+    "id": "billing-03",
+    "subject": "Question about invoice line item",
+    "body": "There's a line item on last month's invoice labeled 'usage overage' that I don't understand. Could someone explain what it covers?",
+    "expectedCategory": "billing",
+    "expectedPriority": "low",
+    "summaryKeywords": ["invoice", "overage", "explain"]
+  },
+  {
+    "id": "billing-04",
+    "subject": "Need to update payment method before renewal",
+    "body": "My plan renews in three days and I need to switch to a new company card before then, otherwise the renewal will fail.",
+    "expectedCategory": "billing",
+    "expectedPriority": "high",
+    "summaryKeywords": ["payment", "method", "renewal"]
+  },
+  {
+    "id": "billing-05",
+    "subject": "Requesting a copy of last year's receipts for taxes",
+    "body": "For our accounting records, could you send over PDF receipts for all of last year's invoices? No rush, whenever is convenient.",
+    "expectedCategory": "billing",
+    "expectedPriority": "low",
+    "summaryKeywords": ["receipts", "invoices", "records"]
+  },
+  {
+    "id": "billing-06",
+    "subject": "Downgrade plan mid-cycle and get a prorated refund",
+    "body": "We want to move from the Team plan to the Starter plan right away and would like the difference refunded on a prorated basis.",
+    "expectedCategory": "billing",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["downgrade", "prorated", "refund"]
+  },
+  {
+    "id": "billing-07",
+    "subject": "Billing address is wrong on my invoices",
+    "body": "The billing address on my last two invoices shows our old office. Please update it to our new address for future invoices.",
+    "expectedCategory": "billing",
+    "expectedPriority": "low",
+    "summaryKeywords": ["billing", "address", "update"]
+  },
+  {
+    "id": "billing-08",
+    "subject": "Trial converted to paid plan without warning",
+    "body": "My free trial silently converted to a paid annual plan and charged my card $588 without any confirmation email. I need this reversed today.",
+    "expectedCategory": "billing",
+    "expectedPriority": "high",
+    "summaryKeywords": ["trial", "charged", "reverse"]
+  },
+  {
+    "id": "technical-01",
+    "subject": "Production API returning 500 errors for all requests",
+    "body": "Every request to your API has been returning HTTP 500 for the last 20 minutes. Our production integration is completely down.",
+    "expectedCategory": "technical",
+    "expectedPriority": "urgent",
+    "summaryKeywords": ["500", "errors", "down"]
+  },
+  {
+    "id": "technical-02",
+    "subject": "Dashboard chart not loading in Safari",
+    "body": "The usage chart on the dashboard just shows a spinner forever in Safari, but it works fine in Chrome. Not urgent, just annoying.",
+    "expectedCategory": "technical",
+    "expectedPriority": "low",
+    "summaryKeywords": ["chart", "safari", "loading"]
+  },
+  {
+    "id": "technical-03",
+    "subject": "Webhook deliveries failing intermittently",
+    "body": "About 1 in 10 of our webhook deliveries are failing with a timeout. It's causing occasional data gaps but the app still mostly works.",
+    "expectedCategory": "technical",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["webhook", "failing", "timeout"]
+  },
+  {
+    "id": "technical-04",
+    "subject": "Can't log in — password reset email never arrives",
+    "body": "I've requested a password reset three times and the email never shows up, not even in spam. I'm locked out of my account.",
+    "expectedCategory": "technical",
+    "expectedPriority": "high",
+    "summaryKeywords": ["password", "reset", "locked"]
+  },
+  {
+    "id": "technical-05",
+    "subject": "Feature request: dark mode for the dashboard",
+    "body": "It would be great if the dashboard supported a dark theme. Just a nice-to-have, no rush at all.",
+    "expectedCategory": "technical",
+    "expectedPriority": "low",
+    "summaryKeywords": ["dark", "mode", "feature"]
+  },
+  {
+    "id": "technical-06",
+    "subject": "Data export stuck at 'processing' for two days",
+    "body": "I requested a full data export two days ago and it still shows 'processing'. I need this data for a board meeting tomorrow morning.",
+    "expectedCategory": "technical",
+    "expectedPriority": "high",
+    "summaryKeywords": ["export", "stuck", "processing"]
+  },
+  {
+    "id": "technical-07",
+    "subject": "Mobile app crashes on opening ticket details",
+    "body": "The iOS app crashes every single time I tap into a ticket's detail view. Reproduces on two different phones running the latest app version.",
+    "expectedCategory": "technical",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["app", "crashes", "ticket"]
+  },
+  {
+    "id": "technical-08",
+    "subject": "All customer data missing after this morning's outage",
+    "body": "After the outage this morning, our workspace shows zero tickets and zero customers — everything appears to have been wiped. This is a total emergency.",
+    "expectedCategory": "technical",
+    "expectedPriority": "urgent",
+    "summaryKeywords": ["data", "missing", "outage"]
+  },
+  {
+    "id": "account-01",
+    "subject": "Need to transfer ownership of the workspace",
+    "body": "Our admin left the company. Could you help transfer workspace ownership to me? I have manager access already.",
+    "expectedCategory": "account",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["transfer", "ownership", "admin"]
+  },
+  {
+    "id": "account-02",
+    "subject": "How do I add a new teammate to my plan?",
+    "body": "I'd like to invite a new hire to our workspace next week. What's the process for adding a seat?",
+    "expectedCategory": "account",
+    "expectedPriority": "low",
+    "summaryKeywords": ["invite", "seat", "teammate"]
+  },
+  {
+    "id": "account-03",
+    "subject": "Suspicious login alert — was this me?",
+    "body": "I got an alert about a login from a country I've never visited. I'm worried my account may have been compromised and need this looked at right away.",
+    "expectedCategory": "account",
+    "expectedPriority": "urgent",
+    "summaryKeywords": ["login", "compromised", "suspicious"]
+  },
+  {
+    "id": "account-04",
+    "subject": "Please delete my account and all associated data",
+    "body": "We've decided to stop using the product. Please delete my account and all our data per GDPR within the required timeframe.",
+    "expectedCategory": "account",
+    "expectedPriority": "high",
+    "summaryKeywords": ["delete", "account", "data"]
+  },
+  {
+    "id": "account-05",
+    "subject": "Can I merge two workspaces into one?",
+    "body": "We ended up with two separate workspaces after a reorg. Is it possible to merge them, and if so, how long does that typically take?",
+    "expectedCategory": "account",
+    "expectedPriority": "low",
+    "summaryKeywords": ["merge", "workspaces", "reorg"]
+  },
+  {
+    "id": "account-06",
+    "subject": "Two-factor authentication locked me out",
+    "body": "I lost access to my authenticator app after switching phones and now I can't get past 2FA to log in. I need access restored today for payroll.",
+    "expectedCategory": "account",
+    "expectedPriority": "high",
+    "summaryKeywords": ["two-factor", "locked", "restore"]
+  },
+  {
+    "id": "account-07",
+    "subject": "Change my account email address",
+    "body": "I switched jobs and need to update the email tied to my account from my old work address to my new one.",
+    "expectedCategory": "account",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["email", "update", "account"]
+  },
+  {
+    "id": "account-08",
+    "subject": "How do I export my personal settings before leaving the team?",
+    "body": "I'm moving to a different team internally and want to know if there's a way to export my personal dashboard settings first. No rush.",
+    "expectedCategory": "account",
+    "expectedPriority": "low",
+    "summaryKeywords": ["export", "settings", "team"]
+  },
+  {
+    "id": "general-01",
+    "subject": "Do you offer a nonprofit discount?",
+    "body": "We're a registered nonprofit and were wondering if you offer any discount on the Team plan for organizations like ours.",
+    "expectedCategory": "general",
+    "expectedPriority": "low",
+    "summaryKeywords": ["nonprofit", "discount", "plan"]
+  },
+  {
+    "id": "general-02",
+    "subject": "What are your support hours?",
+    "body": "Just curious what hours your support team is available and whether you offer weekend coverage.",
+    "expectedCategory": "general",
+    "expectedPriority": "low",
+    "summaryKeywords": ["support", "hours", "weekend"]
+  },
+  {
+    "id": "general-03",
+    "subject": "Requesting a product roadmap briefing for our renewal",
+    "body": "Ahead of our contract renewal next quarter, our leadership would like a short briefing on your product roadmap for the next year.",
+    "expectedCategory": "general",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["roadmap", "renewal", "briefing"]
+  },
+  {
+    "id": "general-04",
+    "subject": "Do you have a status page for incidents?",
+    "body": "Is there a public status page where we can check for ongoing incidents instead of opening a ticket every time something seems slow?",
+    "expectedCategory": "general",
+    "expectedPriority": "low",
+    "summaryKeywords": ["status", "page", "incidents"]
+  },
+  {
+    "id": "general-05",
+    "subject": "Can we schedule a call to discuss enterprise pricing?",
+    "body": "Our company is growing quickly and we'd like to talk to someone about enterprise-tier pricing sometime in the next couple of weeks.",
+    "expectedCategory": "general",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["enterprise", "pricing", "call"]
+  },
+  {
+    "id": "general-06",
+    "subject": "Is there a public API changelog?",
+    "body": "Wondering if there's somewhere we can subscribe to see upcoming and past changes to the public API.",
+    "expectedCategory": "general",
+    "expectedPriority": "low",
+    "summaryKeywords": ["api", "changelog", "subscribe"]
+  },
+  {
+    "id": "general-07",
+    "subject": "Feedback on your onboarding flow",
+    "body": "Just wanted to pass along some feedback — the onboarding checklist was really clear and helped our team get set up fast. Nice work!",
+    "expectedCategory": "general",
+    "expectedPriority": "low",
+    "summaryKeywords": ["feedback", "onboarding", "positive"]
+  },
+  {
+    "id": "general-08",
+    "subject": "Are you SOC 2 compliant?",
+    "body": "Our security team needs to confirm SOC 2 Type II compliance before we can move forward with a larger contract. Could you share your report or certification?",
+    "expectedCategory": "general",
+    "expectedPriority": "medium",
+    "summaryKeywords": ["soc 2", "compliance", "security"]
+  }
+]

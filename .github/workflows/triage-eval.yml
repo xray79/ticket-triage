@@ -1,0 +1,33 @@
+name: Triage Eval
+
+# Manually-triggered, plus auto-triggered whenever the prompt or a provider client changes — per
+# stretch stage S2's own framing ("run in CI whenever a prompt or provider changes"). Not part of
+# the required `ci.yml` gate: it needs a real Ollama with a model pulled, which is too slow/costly
+# to run on every push, and this sandbox's egress policy blocks pulling the ollama/ollama image
+# entirely, so this workflow was written and reviewed but not executed live here.
+on:
+  workflow_dispatch: {}
+  pull_request:
+    paths:
+      - 'src/Modules/Triage/Triage.Application/Providers/TriagePrompt.cs'
+      - 'src/Modules/Triage/Triage.Infrastructure/Providers/**'
+      - 'tools/Triage.Eval/**'
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    services:
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - 11434:11434
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Pull the eval model
+        run: |
+          curl -s http://localhost:11434/api/pull -d '{"name":"llama3.1"}'
+      - name: Run the eval harness against the local provider
+        run: dotnet run --project tools/Triage.Eval -- --provider local
