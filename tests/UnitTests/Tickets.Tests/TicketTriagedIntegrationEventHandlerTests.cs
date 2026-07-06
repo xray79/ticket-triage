@@ -20,7 +20,7 @@ public sealed class TicketTriagedIntegrationEventHandlerTests
         var handler = new TicketTriagedIntegrationEventHandler(repository, unitOfWork);
 
         var occurredOnUtc = DateTimeOffset.UtcNow;
-        var evt = new TicketTriaged(Guid.NewGuid(), occurredOnUtc, ticket.Id, "billing", "high", "summary", "draft", "local", false);
+        var evt = new TicketTriaged(Guid.NewGuid(), occurredOnUtc, ticket.Id, "billing", "high", "summary", "draft", "local", false, "customer@example.com");
 
         await handler.HandleAsync(evt, CancellationToken.None);
 
@@ -39,7 +39,7 @@ public sealed class TicketTriagedIntegrationEventHandlerTests
         var handler = new TicketTriagedIntegrationEventHandler(repository, unitOfWork);
 
         var occurredOnUtc = DateTimeOffset.UtcNow;
-        var evt = new TicketTriaged(Guid.NewGuid(), occurredOnUtc, ticket.Id, "billing", "high", "summary", "draft", "local", false);
+        var evt = new TicketTriaged(Guid.NewGuid(), occurredOnUtc, ticket.Id, "billing", "high", "summary", "draft", "local", false, "customer@example.com");
 
         await handler.HandleAsync(evt, CancellationToken.None);
         await handler.HandleAsync(evt, CancellationToken.None); // redelivered
@@ -55,7 +55,7 @@ public sealed class TicketTriagedIntegrationEventHandlerTests
         var unitOfWork = Substitute.For<ITicketsUnitOfWork>();
         var handler = new TicketTriagedIntegrationEventHandler(repository, unitOfWork);
 
-        var evt = new TicketTriaged(Guid.NewGuid(), DateTimeOffset.UtcNow, Guid.NewGuid(), "billing", "high", "summary", "draft", "local", false);
+        var evt = new TicketTriaged(Guid.NewGuid(), DateTimeOffset.UtcNow, Guid.NewGuid(), "billing", "high", "summary", "draft", "local", false, "customer@example.com");
 
         await handler.HandleAsync(evt, CancellationToken.None);
 

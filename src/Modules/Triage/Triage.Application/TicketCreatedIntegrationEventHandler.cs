@@ -76,7 +76,8 @@ public sealed class TicketCreatedIntegrationEventHandler : IIntegrationEventHand
                 rehydratedSummary,
                 rehydratedDraft,
                 attempt.Provider,
-                attempt.WasFallback);
+                attempt.WasFallback,
+                integrationEvent.CustomerEmail);
 
             _repository.Add(record);
             await _unitOfWork.SaveChangesAsync(ct);

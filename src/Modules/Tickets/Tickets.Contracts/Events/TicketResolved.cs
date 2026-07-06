@@ -5,4 +5,5 @@ namespace Tickets.Contracts.Events;
 public sealed record TicketResolved(
     Guid Id,
     DateTimeOffset OccurredOnUtc,
-    Guid TicketId) : DomainEvent(Id, OccurredOnUtc);
+    Guid TicketId,
+    string CustomerEmail) : DomainEvent(Id, OccurredOnUtc);

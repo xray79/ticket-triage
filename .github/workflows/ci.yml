@@ -20,7 +20,7 @@ jobs:
       - name: Architecture tests
         run: dotnet test tests/ArchitectureTests --no-build -c Release
       - name: Unit tests (with coverage)
-        run: dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests --no-build -c Release --collect:"XPlat Code Coverage"
+        run: dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests --no-build -c Release --collect:"XPlat Code Coverage"
       - name: Integration tests (Testcontainers Postgres)
         run: dotnet test tests/IntegrationTests/Tickets.IntegrationTests --no-build -c Release
 

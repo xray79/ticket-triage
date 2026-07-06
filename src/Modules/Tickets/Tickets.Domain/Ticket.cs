@@ -89,7 +89,7 @@ public sealed class Ticket : AggregateRoot<Guid>
             return Result.Failure(Error.Conflict("Ticket.AlreadyResolved", "Ticket is already resolved."));
 
         Status = TicketStatus.Resolved;
-        Raise(new TicketResolved(Guid.NewGuid(), DateTimeOffset.UtcNow, Id));
+        Raise(new TicketResolved(Guid.NewGuid(), DateTimeOffset.UtcNow, Id, CustomerEmail));
         return Result.Success();
     }
 }

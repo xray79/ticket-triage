@@ -20,6 +20,10 @@ public sealed class ModuleBoundaryTests
             typeof(Triage.Infrastructure.TriageDbContext).Assembly, typeof(Triage.Contracts.Events.TicketTriaged).Assembly),
         ("Identity", typeof(Identity.Domain.Roles).Assembly, typeof(Identity.Application.DependencyInjection).Assembly,
             typeof(Identity.Infrastructure.ApplicationUser).Assembly, typeof(Identity.Contracts.AssemblyMarker).Assembly),
+        ("Notifications", typeof(Notifications.Domain.NotificationLog).Assembly, typeof(Notifications.Application.DependencyInjection).Assembly,
+            typeof(Notifications.Infrastructure.NotificationsDbContext).Assembly, typeof(Notifications.Contracts.AssemblyMarker).Assembly),
+        ("Reporting", typeof(Reporting.Domain.TicketReportEntry).Assembly, typeof(Reporting.Application.DependencyInjection).Assembly,
+            typeof(Reporting.Infrastructure.ReportingDbContext).Assembly, typeof(Reporting.Contracts.AssemblyMarker).Assembly),
     };
 
     public static IEnumerable<object[]> ModuleLayerPairsAcrossModules()

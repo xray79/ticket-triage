@@ -8,6 +8,10 @@ using Host.Middleware;
 using Host.Telemetry;
 using Identity.Application;
 using Identity.Infrastructure;
+using Notifications.Application;
+using Notifications.Infrastructure;
+using Reporting.Application;
+using Reporting.Infrastructure;
 using Shared.Infrastructure.Caching;
 using Shared.Infrastructure.Messaging;
 using Tickets.Application;
@@ -32,6 +36,12 @@ builder.Services.AddTicketsInfrastructure(builder.Configuration);
 
 builder.Services.AddTriageApplication(builder.Configuration);
 builder.Services.AddTriageInfrastructure(builder.Configuration);
+
+builder.Services.AddNotificationsApplication();
+builder.Services.AddNotificationsInfrastructure(builder.Configuration);
+
+builder.Services.AddReportingApplication();
+builder.Services.AddReportingInfrastructure(builder.Configuration);
 
 builder.Services.AddSqsMessaging(builder.Configuration);
 builder.Services.AddDistributedCaching(builder.Configuration);
@@ -65,7 +75,9 @@ builder.Services.AddRateLimiter(options =>
 var healthChecksBuilder = builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Tickets")!, name: "tickets-db")
     .AddNpgSql(builder.Configuration.GetConnectionString("Triage")!, name: "triage-db")
-    .AddNpgSql(builder.Configuration.GetConnectionString("Identity")!, name: "identity-db");
+    .AddNpgSql(builder.Configuration.GetConnectionString("Identity")!, name: "identity-db")
+    .AddNpgSql(builder.Configuration.GetConnectionString("Notifications")!, name: "notifications-db")
+    .AddNpgSql(builder.Configuration.GetConnectionString("Reporting")!, name: "reporting-db");
 
 // Redis is optional (see AddDistributedCaching) — only check it if it's actually configured.
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
@@ -101,6 +113,8 @@ using (var migrationScope = app.Services.CreateScope())
     await migrationScope.ServiceProvider.GetRequiredService<TicketsDbContext>().Database.MigrateAsync();
     await migrationScope.ServiceProvider.GetRequiredService<TriageDbContext>().Database.MigrateAsync();
     await migrationScope.ServiceProvider.GetRequiredService<IdentityDbContext>().Database.MigrateAsync();
+    await migrationScope.ServiceProvider.GetRequiredService<NotificationsDbContext>().Database.MigrateAsync();
+    await migrationScope.ServiceProvider.GetRequiredService<ReportingDbContext>().Database.MigrateAsync();
     await IdentitySeeder.SeedAsync(migrationScope.ServiceProvider, app.Configuration);
 }
 
@@ -126,6 +140,7 @@ app.MapUsersEndpoints();
 app.MapTicketsEndpoints();
 app.MapUserPreferencesEndpoints();
 app.MapOrgSettingsEndpoints();
+app.MapReportingEndpoints();
 
 app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {
