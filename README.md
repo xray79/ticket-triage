@@ -11,15 +11,19 @@ is complete**, plus **Add-on A** (multi-provider resilience: bulkhead concurrenc
 limiting, per-provider telemetry, per-user provider preference, org-wide force-local-only
 policy), **Add-on B** (OpenTelemetry tracing/metrics, security headers, Redis-backed
 triage result caching with an in-memory fallback), **Add-on C** (Notifications and
-Reporting modules), and **Add-on D** (a live-verified WCAG 2.1 AA accessibility pass,
-ADRs, and presentation polish) — see the plan for what's still optional (the stretch
-stages S1–S7).
+Reporting modules), **Add-on D** (a live-verified WCAG 2.1 AA accessibility pass,
+ADRs, and presentation polish), and stretch stage **S1** (Triage extracted into its
+own deployable, `src/TriageService/TriageService.Host` — see ADR 006) — see the plan
+for what's still optional (stretch stages S2–S7).
 
 ## Architecture
 
 ```mermaid
 flowchart TB
     subgraph Host["Host / API (Composition Root)"]
+    end
+
+    subgraph TriageHost["TriageService.Host (own deployable — ADR 006)"]
     end
 
     subgraph Identity["Identity & Access"]
@@ -50,9 +54,9 @@ flowchart TB
 
     Host --> Identity
     Host --> Tickets
-    Host --> Triage
     Host --> Notifications
     Host --> Reporting
+    TriageHost --> Triage
     Tickets -.domain events via SQS.-> Triage
     Tickets -.domain events.-> Notifications
     Tickets -.domain events.-> Reporting
@@ -70,10 +74,11 @@ project or async domain events — never another module's `Domain`/`Application`
 
 ## Why these choices
 
-- **Modular monolith over microservices.** One deployable, strict internal
-  boundaries via per-module `Contracts` projects. Extracting a module to its own
-  service later (see the plan's stretch stage S1) means cutting along a seam that
-  already exists, not a rewrite.
+- **Modular monolith over microservices.** Started as one deployable with strict
+  internal boundaries via per-module `Contracts` projects, so extracting a module
+  to its own service later means cutting along a seam that already exists, not a
+  rewrite — stretch stage S1 (Triage's extraction, ADR 006) is that seam actually
+  getting cut.
 - **Local-first LLM, redact always, cloud is opt-in.** Every ticket is redacted by
   a Presidio (deterministic regex/NER) + Ollama (contextual free-text) union pass
   before any triage call — local or cloud. A cloud provider is only used if the
@@ -91,7 +96,8 @@ project or async domain events — never another module's `Domain`/`Application`
 
 ```
 /src
-  /Host                 ASP.NET Core Web API — composition root, DI wiring, middleware
+  /Host                 ASP.NET Core Web API — composition root for Identity/Tickets/Notifications/Reporting
+  /TriageService/Host    Standalone deployable for the Triage module (see docs/adr/006)
   /Modules/{Tickets,Triage,Identity,Notifications,Reporting}/*.{Domain,Application,Infrastructure,Contracts}
   /Shared/{Shared.Kernel,Shared.Abstractions,Shared.Infrastructure}
 /tests
@@ -111,11 +117,15 @@ docker compose up
 ```
 
 This brings up Postgres, LocalStack (SQS), Ollama (pulls `llama3.1` on first start),
-Microsoft Presidio, the API, and the Angular dev server. First run takes a few
-minutes while Ollama pulls its model; subsequent runs are fast.
+Microsoft Presidio, Redis, the API, the standalone Triage service, and the Angular
+dev server. First run takes a few minutes while Ollama pulls its model; subsequent
+runs are fast.
 
 - API: http://localhost:5000 (Swagger at `/swagger` in Development)
 - Frontend: http://localhost:4200
+- The Triage service (`src/TriageService/TriageService.Host`) has no HTTP surface
+  besides health checks — it's a pure SQS consumer/producer, so there's no port to
+  browse to; it shows up in `docker compose ps`/logs as `triage-service`.
 - A seed admin account is created on first boot from
   `Identity:SeedAdmin:Email` / `Identity:SeedAdmin:Password`
   (defaults in `appsettings.Development.json`: `admin@ticket-triage.local` /
@@ -123,9 +133,12 @@ minutes while Ollama pulls its model; subsequent runs are fast.
 
 ### Running the backend without Docker
 
-`dotnet run --project src/Host` works against a Postgres/LocalStack/Ollama you
-run yourself (e.g. via `docker compose up postgres localstack ollama
-presidio-analyzer`), which is faster for iterating on the API alone.
+`dotnet run --project src/Host` and `dotnet run --project
+src/TriageService/TriageService.Host` (run both — Tickets and Triage are separate
+deployables now, see docs/adr/006) work against a Postgres/LocalStack/Ollama/Redis
+you run yourself (e.g. via `docker compose up postgres localstack ollama
+presidio-analyzer redis`), which is faster for iterating without a full image
+rebuild.
 
 ### Running the frontend without Docker
 
@@ -236,6 +249,20 @@ architecture diagram, module list, and this section were updated to reflect
 Notifications/Reporting. No new AWS deploy or recorded video — this stage is
 entirely about the repo, matching the plan's own scope for it.
 
+**Stretch stage S1 (extract Triage as a standalone service):** the `Triage` module
+now ships as its own deployable, `src/TriageService/TriageService.Host`, referencing
+only `Triage.Application`/`Triage.Infrastructure`/`Shared.Infrastructure` — no
+reference to Tickets/Identity/Notifications/Reporting. The main `Host` dropped its
+Triage references, connection string, health check, and migration entirely. Because
+Tickets↔Triage already communicated purely through the outbox/SQS (never
+in-process — see ADR 006), the split required no protocol change, just a new entry
+point, Dockerfile, appsettings surface, and a second Terraform `ecs-service` module
+per environment. Live-verified here: the new service builds, migrates its schema
+against a real Postgres, serves `/health/live` and `/health/ready` as healthy, and
+the main Host still creates tickets end-to-end (201) with `triage-db` correctly
+absent from its own `/health/ready` — all 62 architecture tests and 119 unit tests
+still pass with the module boundary unchanged.
+
 **Documented but not exercised in this environment:** the Terraform modules are
 written and pass `terraform fmt`/HCL review, but `terraform validate`/`plan`/`apply`
 were not run here (the sandbox's egress policy blocks the Terraform Registry and
@@ -243,11 +270,12 @@ container registries) — review before a real `apply`. Multi-provider cloud tri
 (OpenAI/Anthropic/Gemini) is implemented but untested against live provider APIs.
 The async SQS-triggered paths for Notifications/Reporting/Triage caching couldn't
 be driven end-to-end here (LocalStack/SQS isn't reachable in this sandbox, same
-limitation as Stage 0) — covered by unit tests instead of a live run. Add-on D
-(presentation polish) and the stretch stages (S1–S7) are not started.
+limitation as Stage 0) — covered by unit tests instead of a live run. Stretch
+stages S2–S7 are not started.
 
 ## ADRs
 
 See [`docs/adr`](docs/adr) for the reasoning behind the modular monolith, local-first
-LLM strategy, PII redaction approach, branching strategy, and the graceful-fallback
-pattern used for optional infrastructure (Redis, SMTP).
+LLM strategy, PII redaction approach, branching strategy, the graceful-fallback
+pattern used for optional infrastructure (Redis, SMTP), and extracting Triage into
+its own deployable.
