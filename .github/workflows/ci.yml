@@ -115,9 +115,12 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet build src/Host -c Release
       - name: Start the Host against the service-container Postgres
+        # Working directory matters: appsettings.json lives next to Host.dll, and .NET's
+        # default content root is the process's current directory, not the assembly's - running
+        # this from the repo root (the job's default cwd) makes every connection string resolve
+        # to null and crash on startup. cd into the output dir first, same as running it locally.
         run: |
-          ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" \
-            dotnet src/Host/bin/Release/net8.0/Host.dll &
+          (cd src/Host/bin/Release/net8.0 && ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" dotnet Host.dll) &
           for i in $(seq 1 30); do
             curl -sf http://localhost:5000/health/live && exit 0
             sleep 1
@@ -164,9 +167,12 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet build src/Host -c Release
       - name: Start the Host against the service-container Postgres
+        # Working directory matters: appsettings.json lives next to Host.dll, and .NET's
+        # default content root is the process's current directory, not the assembly's - running
+        # this from the repo root (the job's default cwd) makes every connection string resolve
+        # to null and crash on startup. cd into the output dir first, same as running it locally.
         run: |
-          ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" \
-            dotnet src/Host/bin/Release/net8.0/Host.dll &
+          (cd src/Host/bin/Release/net8.0 && ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" dotnet Host.dll) &
           for i in $(seq 1 30); do
             curl -sf http://localhost:5000/health/live && exit 0
             sleep 1
