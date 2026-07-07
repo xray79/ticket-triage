@@ -18,8 +18,10 @@ deployable, `src/TriageService/TriageService.Host` — see ADR 006), and stretch
 category/priority/summary quality per provider), stretch stage **S3** (a
 concurrent-ingestion load test — see
 [`docs/load-test-report.md`](docs/load-test-report.md)), and stretch stage **S4**
-(RFCs for the decisions that had real alternatives — see [`docs/rfc`](docs/rfc)) —
-see the plan for what's still optional (stretch stages S5–S7).
+(RFCs for the decisions that had real alternatives — see [`docs/rfc`](docs/rfc)), and
+stretch stage **S5** (a STRIDE threat model for the AI boundary — see
+[`docs/threat-model-ai-boundary.md`](docs/threat-model-ai-boundary.md)) — see the
+plan for what's still optional (stretch stages S6–S7).
 
 ## Architecture
 
@@ -335,7 +337,7 @@ harness's CI workflow (`triage-eval.yml`) wasn't run live for the same
 Docker-image-pull reason. The load test could only exercise the synchronous ticket-
 creation path — SQS queue depth, Ollama latency under concurrency, and the cloud
 provider circuit breaker weren't observable here for the same reasons (see
-`docs/load-test-report.md`'s "Scope and limitations"). Stretch stages S5–S7 are not
+`docs/load-test-report.md`'s "Scope and limitations"). Stretch stages S6–S7 are not
 started.
 
 **Stretch stage S4 (RFCs for decisions with real alternatives):** [`docs/rfc`](docs/rfc)
@@ -345,6 +347,25 @@ actually used, and how org policy/a per-ticket request/a user's standing provide
 preference should resolve when they disagree. Each walks through the real
 alternatives and their tradeoffs before landing on a recommendation — distinct from
 an ADR, which records the outcome; an RFC shows the reasoning that got there.
+
+**Stretch stage S5 (threat model for the AI boundary):**
+[`docs/threat-model-ai-boundary.md`](docs/threat-model-ai-boundary.md) is a STRIDE
+pass on the boundary where an LLM's free-text output becomes trusted structured data.
+**Found and fixed in this stage:** `TriagePrompt.Parse` never validated the model's
+`category`/`priority` against the fixed four-value vocabulary it was asked for — a
+prompt-injected or malfunctioning response could put an arbitrary string directly
+into an automated email sent to the customer
+(`"Your ticket has been triaged as {category} ({priority} priority)"`, unconditionally
+sent by `TicketTriagedNotificationHandler`) with no human review. Fixed with a strict
+allow-list + safe-default fallback, covered by new `TriagePromptTests` (including
+literal prompt-injection-style test inputs). **Found and documented, not fixed:** a
+"leak the redaction mapping" path (the plan's own named example) via
+`RedactedTicket.RehydrateBody` blindly substituting every placeholder back into
+whatever text the model returns, which could be tricked into enumerating all of a
+ticket's own redacted PII into one consolidated artifact; a repudiation gap (the
+model's raw response is never persisted, only the parsed result); and a couple of
+DoS/cost angles (cache-bypass via trivial text variation, no max ticket length) — each
+documented with why it wasn't rushed into a one-line fix in this stage.
 
 ## ADRs
 
