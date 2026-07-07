@@ -8,7 +8,13 @@ const angularTemplateParser = require('@angular-eslint/template-parser');
 
 module.exports = [
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'src/environments/environment.prod.ts']
+    ignores: [
+      'dist/**',
+      'coverage/**',
+      'node_modules/**',
+      'src/environments/environment.prod.ts',
+      'src/app/core/api/generated/**'
+    ]
   },
   {
     files: ['**/*.ts'],

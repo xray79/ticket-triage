@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CreateTicketRequest, TicketDetail, TicketStatus, TicketSummary } from '../models/ticket.models';
+import { IdResponse } from './generated/api-types';
 
 @Injectable({ providedIn: 'root' })
 export class TicketsApi {
@@ -19,8 +20,8 @@ export class TicketsApi {
     return firstValueFrom(this.http.get<TicketDetail>(`${this.baseUrl}/${id}`));
   }
 
-  create(request: CreateTicketRequest): Promise<{ id: string }> {
-    return firstValueFrom(this.http.post<{ id: string }>(this.baseUrl, request));
+  create(request: CreateTicketRequest): Promise<Required<IdResponse>> {
+    return firstValueFrom(this.http.post<Required<IdResponse>>(this.baseUrl, request));
   }
 
   resolve(id: string): Promise<void> {
