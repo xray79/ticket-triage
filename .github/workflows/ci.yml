@@ -20,7 +20,10 @@ jobs:
       - name: Architecture tests
         run: dotnet test tests/ArchitectureTests --no-build -c Release
       - name: Unit tests (with coverage)
-        run: dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests --no-build -c Release --collect:"XPlat Code Coverage"
+        run: |
+          for proj in tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests; do
+            dotnet test "$proj" --no-build -c Release --collect:"XPlat Code Coverage"
+          done
       - name: Integration tests (Testcontainers Postgres)
         run: dotnet test tests/IntegrationTests/Tickets.IntegrationTests --no-build -c Release
 
@@ -46,6 +49,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: github/codeql-action/init@v3
         with:
           languages: csharp, javascript-typescript
