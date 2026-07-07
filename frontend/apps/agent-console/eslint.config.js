@@ -32,6 +32,7 @@ module.exports = [
         atob: 'readonly',
         console: 'readonly',
         fetch: 'readonly',
+        performance: 'readonly',
         HTMLElement: 'readonly',
         describe: 'readonly',
         beforeEach: 'readonly',
