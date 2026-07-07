@@ -32,6 +32,38 @@ the MVP:
 See the plan and each stage's own section below for what was verified live vs. documented
 as a sandbox limitation.
 
+## Demo
+
+The agent console (`frontend/apps/agent-console`) running against the real API, backend by
+Postgres, with the screens an agent actually uses day to day.
+
+**Sign-in**
+
+![Sign in](docs/screenshots/login.png)
+
+**Ticket queue** — mixed states: untriaged, triaged at each priority, and resolved.
+
+![Ticket queue](docs/screenshots/ticket-queue.png)
+
+**Ticket detail** — the AI-generated category, summary, and draft reply for a triaged ticket.
+
+![Ticket detail](docs/screenshots/ticket-detail.png)
+
+**Reporting dashboard** (Add-on C) — triage funnel counts, average triage latency, and the
+local-vs-cloud provider breakdown.
+
+![Reporting dashboard](docs/screenshots/reporting-dashboard.png)
+
+**Provider settings** — the local-first, opt-in-cloud choice from
+[ADR 002](docs/adr/002-local-first-llm-with-opt-in-cloud-fallback.md) as an agent sees it.
+
+![Provider settings](docs/screenshots/provider-settings.png)
+
+**Org policy** — the org-wide force-local-only override described in
+[RFC 003](docs/rfc/003-provider-preference-resolution-order.md).
+
+![Org policy](docs/screenshots/org-settings.png)
+
 ## Architecture
 
 ```mermaid
