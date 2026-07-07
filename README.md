@@ -10,8 +10,10 @@ plan in [`docs/architecture-plan.md`](docs/architecture-plan.md). **Stage 0 (the
 is complete**, plus **Add-on A** (multi-provider resilience: bulkhead concurrency
 limiting, per-provider telemetry, per-user provider preference, org-wide force-local-only
 policy), **Add-on B** (OpenTelemetry tracing/metrics, security headers, Redis-backed
-triage result caching with an in-memory fallback), and **Add-on C** (Notifications and
-Reporting modules) — see the plan for what's still optional.
+triage result caching with an in-memory fallback), **Add-on C** (Notifications and
+Reporting modules), and **Add-on D** (a live-verified WCAG 2.1 AA accessibility pass,
+ADRs, and presentation polish) — see the plan for what's still optional (the stretch
+stages S1–S7).
 
 ## Architecture
 
@@ -159,7 +161,19 @@ cleanly at container startup rather than passing) — it should run in any envir
 with normal Docker Hub access, including GitHub Actions, but wasn't seen green in this
 session.
 
-## What's implemented (Stage 0 + Add-ons A/B/C) vs. what's a documented follow-up
+`frontend/apps/agent-console/e2e` has a Playwright + axe-core accessibility suite
+(WCAG 2.1 A/AA) covering every authenticated page — login, ticket queue, ticket
+detail, provider settings, org policy, user management, reporting. It needs the
+full stack running (see `e2e/README.md`), so it's not wired into CI, but it *was*
+run here against a live API + Angular dev server: **zero violations, at any
+impact level, on every page.**
+
+```bash
+cd frontend/apps/agent-console
+npm run e2e
+```
+
+## What's implemented (Stage 0 + Add-ons A/B/C/D) vs. what's a documented follow-up
 
 **Implemented and verified working end-to-end** (see the ADRs and the plan for
 detail): login/JWT/refresh with role+permission-based authorization, ticket
@@ -216,6 +230,16 @@ chart) — live-verified end-to-end: the endpoint, its permission gate
 page all work against the real API and render correctly in a real browser. The
 architecture test suite now covers all 5 modules (62 cases, up from 20).
 
+**Add-on D (presentation polish):** a Playwright + axe-core accessibility suite
+covering every authenticated page, actually run against a live API + Angular
+dev server rather than left as an aspiration — **zero WCAG 2.1 A/AA violations
+at any impact level** on every page tested. ADR 005 documents the
+graceful-fallback pattern used repeatedly across Add-ons B/C (Redis, SMTP,
+SQS routes) once it recurred often enough to be worth naming. The
+architecture diagram, module list, and this section were updated to reflect
+Notifications/Reporting. No new AWS deploy or recorded video — this stage is
+entirely about the repo, matching the plan's own scope for it.
+
 **Documented but not exercised in this environment:** the Terraform modules are
 written and pass `terraform fmt`/HCL review, but `terraform validate`/`plan`/`apply`
 were not run here (the sandbox's egress policy blocks the Terraform Registry and
@@ -229,4 +253,5 @@ limitation as Stage 0) — covered by unit tests instead of a live run. Add-on D
 ## ADRs
 
 See [`docs/adr`](docs/adr) for the reasoning behind the modular monolith, local-first
-LLM strategy, PII redaction approach, and branching strategy.
+LLM strategy, PII redaction approach, branching strategy, and the graceful-fallback
+pattern used for optional infrastructure (Redis, SMTP).
