@@ -55,3 +55,21 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Node / Angular
+node_modules/
+frontend/**/dist/
+frontend/**/.angular/
+frontend/**/coverage/
+npm-debug.log*
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Local dev
+*.local.json

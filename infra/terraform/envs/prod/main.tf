@@ -1,0 +1,102 @@
+terraform {
+  required_version = ">= 1.9"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+
+  backend "s3" {
+    # Values supplied via -backend-config in CI (bucket/key/region/dynamodb_table differ
+    # per environment); omitted here so this file has no environment-specific state.
+  }
+}
+
+provider "aws" {
+  region = var.region
+}
+
+locals {
+  name = "ticket-triage-${var.environment}"
+  tags = {
+    Project     = "ticket-triage"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+module "vpc" {
+  source             = "../../modules/vpc"
+  name               = local.name
+  availability_zones = var.availability_zones
+  tags               = local.tags
+}
+
+module "sqs" {
+  source      = "../../modules/sqs"
+  name_prefix = local.name
+  queue_names = ["tickets-inbox", "triage-inbox"]
+  tags        = local.tags
+}
+
+module "secrets" {
+  source      = "../../modules/secrets"
+  name_prefix = local.name
+  secret_names = [
+    "jwt-signing-key",
+    "openai-api-key",
+    "anthropic-api-key",
+    "gemini-api-key",
+    "db-credentials"
+  ]
+  tags = local.tags
+}
+
+module "rds" {
+  source          = "../../modules/rds"
+  name            = local.name
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.public_subnet_ids
+  vpc_cidr_block  = var.vpc_cidr_block
+  instance_class  = "db.t4g.micro"
+  master_password = var.db_master_password
+  tags            = local.tags
+}
+
+module "api" {
+  source           = "../../modules/ecs-service"
+  name             = "${local.name}-api"
+  region           = var.region
+  vpc_id           = module.vpc.vpc_id
+  subnet_ids       = module.vpc.public_subnet_ids
+  image            = var.api_image
+  use_fargate_spot = false # prod: on-demand, not Spot
+  desired_count    = 2     # prod: two tasks for basic availability
+
+  # NOTE: the DB password is interpolated into a plain environment variable here for
+  # brevity. Before a real deploy, switch this to the ECS task definition's `secrets`
+  # field pulling from module.secrets so the password never lands in plan/state output.
+  environment = {
+    ASPNETCORE_ENVIRONMENT               = "Production"
+    "ConnectionStrings__Tickets"         = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
+    "ConnectionStrings__Triage"          = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
+    "ConnectionStrings__Identity"        = "Host=${module.rds.endpoint};Database=ticket_triage;Username=ticket_triage;Password=${var.db_master_password}"
+    "Sqs__Queues__TicketsInbox"          = module.sqs.queue_urls["tickets-inbox"]
+    "Sqs__Queues__TriageInbox"           = module.sqs.queue_urls["triage-inbox"]
+    "Sqs__Routes__TicketCreated__0"      = module.sqs.queue_urls["triage-inbox"]
+    "Sqs__Routes__TicketTriaged__0"      = module.sqs.queue_urls["tickets-inbox"]
+    "Sqs__Routes__TicketTriageFailed__0" = module.sqs.queue_urls["tickets-inbox"]
+  }
+
+  secret_arns    = values(module.secrets.secret_arns)
+  sqs_queue_arns = values(module.sqs.queue_arns)
+  tags           = local.tags
+}
+
+module "frontend" {
+  source      = "../../modules/frontend"
+  bucket_name = "${local.name}-frontend"
+  tags        = local.tags
+}
