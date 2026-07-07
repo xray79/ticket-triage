@@ -1,0 +1,16 @@
+title = "ticket-triage gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = """
+Known, documented dev-only placeholder values committed intentionally for
+docker compose/local dev convenience — never used for any real deployment
+(a real environment sources these from a secret manager / env var instead,
+same pattern as the seed admin password called out in the README). Not a
+leaked production secret.
+"""
+regexes = [
+  '''mTkw/iHdsgSW/LLdH0VIh2/0qk7MY2zDdBk5TqXcKKI=''',
+]

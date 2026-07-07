@@ -20,7 +20,10 @@ jobs:
       - name: Architecture tests
         run: dotnet test tests/ArchitectureTests --no-build -c Release
       - name: Unit tests (with coverage)
-        run: dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests --no-build -c Release --collect:"XPlat Code Coverage"
+        run: |
+          for proj in tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests; do
+            dotnet test "$proj" --no-build -c Release --collect:"XPlat Code Coverage"
+          done
       - name: Integration tests (Testcontainers Postgres)
         run: dotnet test tests/IntegrationTests/Tickets.IntegrationTests --no-build -c Release
 
@@ -45,10 +48,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks needs full history to diff the PR's commit range
       - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: github/codeql-action/init@v3
         with:
           languages: csharp, javascript-typescript
+      # CodeQL's C# extractor traces the actual compiler invocation — with no build step it has
+      # nothing to analyze and fails with "detected code written in C# but could not process any
+      # of it." javascript-typescript doesn't need this (CodeQL parses it directly).
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build TicketTriage.sln
       - uses: github/codeql-action/analyze@v3
 
   infra-plan:
