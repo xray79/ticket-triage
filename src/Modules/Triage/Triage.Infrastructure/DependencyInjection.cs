@@ -8,8 +8,10 @@ using Shared.Abstractions.Messaging;
 using Shared.Infrastructure.Messaging;
 using Shared.Infrastructure.Outbox;
 using Tickets.Contracts.Events;
+using Triage.Application.Caching;
 using Triage.Application.Providers;
 using Triage.Application.Redaction;
+using Triage.Infrastructure.Caching;
 using Triage.Infrastructure.Providers;
 using Triage.Infrastructure.Redaction;
 
@@ -84,6 +86,10 @@ public static class DependencyInjection
             new GeminiTriageClient(sp.GetRequiredService<GeminiTriageClientHttpClient>().Client, options.Gemini.ApiKey, options.Gemini.Model));
 
         services.AddScoped<ILlmProviderFactory, LlmProviderFactory>();
+
+        services.AddSingleton<ITriageResultCache>(sp => new DistributedTriageResultCache(
+            sp.GetRequiredService<Microsoft.Extensions.Caching.Distributed.IDistributedCache>(),
+            TimeSpan.FromHours(options.Cache.TtlHours)));
 
         services.AddHostedService<OutboxDispatcherHostedService<TriageDbContext>>();
 

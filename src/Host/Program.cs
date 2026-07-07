@@ -5,8 +5,10 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Host.Endpoints;
 using Host.Middleware;
+using Host.Telemetry;
 using Identity.Application;
 using Identity.Infrastructure;
+using Shared.Infrastructure.Caching;
 using Shared.Infrastructure.Messaging;
 using Tickets.Application;
 using Tickets.Infrastructure;
@@ -32,6 +34,8 @@ builder.Services.AddTriageApplication(builder.Configuration);
 builder.Services.AddTriageInfrastructure(builder.Configuration);
 
 builder.Services.AddSqsMessaging(builder.Configuration);
+builder.Services.AddDistributedCaching(builder.Configuration);
+builder.Services.AddTicketTriageTelemetry(builder.Configuration);
 
 // ---- Cross-cutting: CORS, rate limiting, health checks, OpenAPI. ----
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
@@ -58,10 +62,15 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-builder.Services.AddHealthChecks()
+var healthChecksBuilder = builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Tickets")!, name: "tickets-db")
     .AddNpgSql(builder.Configuration.GetConnectionString("Triage")!, name: "triage-db")
     .AddNpgSql(builder.Configuration.GetConnectionString("Identity")!, name: "identity-db");
+
+// Redis is optional (see AddDistributedCaching) — only check it if it's actually configured.
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+    healthChecksBuilder.AddRedis(redisConnectionString, name: "redis-cache");
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -102,6 +111,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
