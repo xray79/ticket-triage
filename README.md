@@ -20,8 +20,10 @@ concurrent-ingestion load test — see
 [`docs/load-test-report.md`](docs/load-test-report.md)), and stretch stage **S4**
 (RFCs for the decisions that had real alternatives — see [`docs/rfc`](docs/rfc)), and
 stretch stage **S5** (a STRIDE threat model for the AI boundary — see
-[`docs/threat-model-ai-boundary.md`](docs/threat-model-ai-boundary.md)) — see the
-plan for what's still optional (stretch stages S6–S7).
+[`docs/threat-model-ai-boundary.md`](docs/threat-model-ai-boundary.md)), and stretch
+stage **S6** (a real simulated incident + blameless postmortem — see
+[`docs/postmortems/001-poison-outbox-message.md`](docs/postmortems/001-poison-outbox-message.md))
+— see the plan for what's still optional (stretch stage S7).
 
 ## Architecture
 
@@ -167,7 +169,8 @@ npm start
 # Backend
 dotnet test tests/ArchitectureTests
 dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests \
-  tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests tests/UnitTests/Triage.Eval.Tests
+  tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests tests/UnitTests/Triage.Eval.Tests \
+  tests/UnitTests/Shared.Infrastructure.Tests
 
 # Frontend
 cd frontend/apps/agent-console
@@ -337,7 +340,7 @@ harness's CI workflow (`triage-eval.yml`) wasn't run live for the same
 Docker-image-pull reason. The load test could only exercise the synchronous ticket-
 creation path — SQS queue depth, Ollama latency under concurrency, and the cloud
 provider circuit breaker weren't observable here for the same reasons (see
-`docs/load-test-report.md`'s "Scope and limitations"). Stretch stages S6–S7 are not
+`docs/load-test-report.md`'s "Scope and limitations"). Stretch stage S7 is not
 started.
 
 **Stretch stage S4 (RFCs for decisions with real alternatives):** [`docs/rfc`](docs/rfc)
@@ -366,6 +369,26 @@ ticket's own redacted PII into one consolidated artifact; a repudiation gap (the
 model's raw response is never persisted, only the parsed result); and a couple of
 DoS/cost angles (cache-bypass via trivial text variation, no max ticket length) — each
 documented with why it wasn't rushed into a one-line fix in this stage.
+
+**Stretch stage S6 (simulated incident + blameless postmortem):**
+[`docs/postmortems/001-poison-outbox-message.md`](docs/postmortems/001-poison-outbox-message.md)
+is a real incident, not a narrative — a live `src/Host` running against local Postgres had one
+pending outbox row's `Type` column deliberately corrupted via direct SQL (simulating a
+malformed/corrupted redelivered message), then the resulting behavior was observed through
+the app's own logs. **Finding:** `OutboxDispatcherHostedService` retried the corrupted message
+every 5-second poll indefinitely — confirmed by 7+ repeated log entries for the same message ID
+over about a minute — with no backoff, no dead-lettering, and (mechanically, though not
+observed at this test's small scale) the potential to starve newer legitimate messages out of
+the dispatcher's fixed-size batch if enough such messages or backlog accumulated ahead of them.
+**Fixed:** the dispatcher now distinguishes an unrecoverable failure (the message's own
+type/content can never resolve, so retrying is pointless) from a transient one (the actual
+publish call failing — broker unreachable — which should keep retrying, exactly as this
+sandbox's own permanently-unreachable SQS already exercises constantly); an unrecoverable
+message is now marked processed with an "Abandoned" error instead of retrying forever. Covered
+by three new tests in `Shared.Infrastructure.Tests` against a real EF Core `DbContext`,
+reproducing the exact mechanism, not just the symptom. The postmortem also documents follow-ups
+not done here (a real dead-letter surface, a max-retry policy for transient failures, and a
+metric for abandoned messages) rather than treating the one fix as the whole answer.
 
 ## ADRs
 

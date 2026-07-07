@@ -97,6 +97,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Triage.Eval", "tools\Triage
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Triage.Eval.Tests", "tests\UnitTests\Triage.Eval.Tests\Triage.Eval.Tests.csproj", "{74E5D120-42F7-4568-B545-FB57792982A6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Infrastructure.Tests", "tests\UnitTests\Shared.Infrastructure.Tests\Shared.Infrastructure.Tests.csproj", "{37357196-AA6C-4FC5-81CA-170D0794D625}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -242,6 +244,10 @@ Global
 		{74E5D120-42F7-4568-B545-FB57792982A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74E5D120-42F7-4568-B545-FB57792982A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74E5D120-42F7-4568-B545-FB57792982A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37357196-AA6C-4FC5-81CA-170D0794D625}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37357196-AA6C-4FC5-81CA-170D0794D625}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37357196-AA6C-4FC5-81CA-170D0794D625}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37357196-AA6C-4FC5-81CA-170D0794D625}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{02004DC8-033F-4A5A-B108-11297D5F10EF} = {48B250E3-DFDB-4282-A543-F96E7C097AA5}
@@ -288,5 +294,6 @@ Global
 		{2209BC8F-3596-41E3-B434-179D907E81DC} = {824942D7-8A27-403E-BFD3-539495C159FA}
 		{1355A8BD-D39D-49C9-B8A7-D957F077FFAC} = {873F4AA6-E0D3-4439-8E7B-2CD70DB1D4BD}
 		{74E5D120-42F7-4568-B545-FB57792982A6} = {7BBB7BFD-422C-4113-A524-17C4B6C9EEEA}
+		{37357196-AA6C-4FC5-81CA-170D0794D625} = {7BBB7BFD-422C-4113-A524-17C4B6C9EEEA}
 	EndGlobalSection
 EndGlobal
