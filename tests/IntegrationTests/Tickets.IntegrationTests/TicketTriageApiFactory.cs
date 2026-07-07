@@ -36,6 +36,8 @@ public sealed class TicketTriageApiFactory : WebApplicationFactory<Program>, IAs
                 ["ConnectionStrings:Tickets"] = _postgres.GetConnectionString(),
                 ["ConnectionStrings:Triage"] = _postgres.GetConnectionString(),
                 ["ConnectionStrings:Identity"] = _postgres.GetConnectionString(),
+                ["ConnectionStrings:Notifications"] = _postgres.GetConnectionString(),
+                ["ConnectionStrings:Reporting"] = _postgres.GetConnectionString(),
                 ["Jwt:SigningKey"] = Convert.ToBase64String(new byte[32]),
                 ["Sqs:ServiceUrl"] = "http://127.0.0.1:1", // deliberately unreachable
             });
