@@ -2,10 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { OrgSettingsDto, ProviderPreferenceResponse } from './generated/api-types';
 
-export interface OrgSettings {
-  forceLocalOnly: boolean;
-}
+export type OrgSettings = Required<OrgSettingsDto>;
 
 @Injectable({ providedIn: 'root' })
 export class PreferencesApi {
@@ -13,8 +12,10 @@ export class PreferencesApi {
 
   constructor(private readonly http: HttpClient) {}
 
-  getMyProviderPreference(): Promise<{ providerPreference: string }> {
-    return firstValueFrom(this.http.get<{ providerPreference: string }>(`${this.baseUrl}/api/users/me/provider-preference`));
+  getMyProviderPreference(): Promise<Required<ProviderPreferenceResponse>> {
+    return firstValueFrom(
+      this.http.get<Required<ProviderPreferenceResponse>>(`${this.baseUrl}/api/users/me/provider-preference`)
+    );
   }
 
   setMyProviderPreference(providerPreference: string): Promise<void> {

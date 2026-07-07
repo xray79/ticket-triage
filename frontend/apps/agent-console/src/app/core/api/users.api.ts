@@ -2,13 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { IdResponse, RegisterUserRequest as GeneratedRegisterUserRequest } from './generated/api-types';
 
-export interface RegisterUserRequest {
-  email: string;
-  password: string;
-  displayName: string;
-  role: string;
-}
+export type RegisterUserRequest = Required<GeneratedRegisterUserRequest>;
 
 @Injectable({ providedIn: 'root' })
 export class UsersApi {
@@ -16,7 +12,7 @@ export class UsersApi {
 
   constructor(private readonly http: HttpClient) {}
 
-  register(request: RegisterUserRequest): Promise<{ id: string }> {
-    return firstValueFrom(this.http.post<{ id: string }>(this.baseUrl, request));
+  register(request: RegisterUserRequest): Promise<Required<IdResponse>> {
+    return firstValueFrom(this.http.post<Required<IdResponse>>(this.baseUrl, request));
   }
 }

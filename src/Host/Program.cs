@@ -82,6 +82,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Ticket Triage API", Version = "v1" });
+    // Reflects C#'s non-nullable reference types as required OpenAPI properties, so the
+    // generated frontend client's fields aren't all optional regardless of actual nullability.
+    options.SupportNonNullableReferenceTypes();
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",

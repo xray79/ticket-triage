@@ -14,13 +14,13 @@ public static class AuthEndpoints
         {
             var result = await sender.Send(new LoginCommand(request.Email, request.Password), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.Problem(result.Error.Message, statusCode: 401);
-        });
+        }).Produces<AuthResultDto>().ProducesProblem(401);
 
         group.MapPost("/refresh", async (RefreshRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new RefreshTokenCommand(request.RefreshToken), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.Problem(result.Error.Message, statusCode: 401);
-        });
+        }).Produces<AuthResultDto>().ProducesProblem(401);
     }
 
     public sealed record LoginRequest(string Email, string Password);

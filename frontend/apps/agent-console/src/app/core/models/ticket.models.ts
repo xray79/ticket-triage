@@ -1,41 +1,19 @@
+import type { CreateTicketRequest as GeneratedCreateTicketRequest, TicketDto, TicketSummaryDto, TriageResultDto } from '../api/generated/api-types';
+
+// Not encoded as an enum in the OpenAPI schema (the backend serializes the domain enum as a
+// plain string), so this union is hand-maintained alongside Tickets.Domain.TicketStatus.
 export type TicketStatus = 'New' | 'Triaged' | 'InProgress' | 'Resolved' | 'TriageFailed';
 
-export interface TicketSummary {
-  id: string;
-  subject: string;
-  customerEmail: string;
-  status: TicketStatus;
-  priority: string | null;
-  assignedToUserId: string | null;
-  createdAtUtc: string;
-}
+// The generated DTOs mark every field optional (the backend doesn't populate OpenAPI's
+// `required` list) - `Required` reflects that a successful response always carries real values,
+// and `status` is narrowed from `string` to the actual status union above.
+export type TicketSummary = Omit<Required<TicketSummaryDto>, 'status'> & { status: TicketStatus };
 
-export interface TriageResult {
-  category: string;
-  priority: string;
-  summary: string;
-  draftReply: string;
-  provider: string;
-  wasFallback: boolean;
-  triagedAtUtc: string;
-}
+export type TriageResult = Required<TriageResultDto>;
 
-export interface TicketDetail {
-  id: string;
-  subject: string;
-  body: string;
-  customerEmail: string;
+export type TicketDetail = Omit<Required<TicketDto>, 'status' | 'triage'> & {
   status: TicketStatus;
-  requestedProvider: string;
-  createdByUserId: string;
-  createdAtUtc: string;
-  assignedToUserId: string | null;
   triage: TriageResult | null;
-}
+};
 
-export interface CreateTicketRequest {
-  subject: string;
-  body: string;
-  customerEmail: string;
-  requestedProvider: string;
-}
+export type CreateTicketRequest = Required<GeneratedCreateTicketRequest>;
