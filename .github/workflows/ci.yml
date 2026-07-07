@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - run: dotnet restore TicketTriage.sln
       - run: dotnet format --verify-no-changes
       - run: dotnet build TicketTriage.sln --no-restore -c Release
@@ -67,7 +67,7 @@ jobs:
       # of it." javascript-typescript doesn't need this (CodeQL parses it directly).
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - run: dotnet build TicketTriage.sln
       - uses: github/codeql-action/analyze@v3
       - name: NuGet vulnerable package scan
@@ -112,7 +112,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - run: dotnet build src/Host -c Release
       - name: Start the Host against the service-container Postgres
         # Working directory matters: appsettings.json lives next to Host.dll, and .NET's
@@ -120,7 +120,7 @@ jobs:
         # this from the repo root (the job's default cwd) makes every connection string resolve
         # to null and crash on startup. cd into the output dir first, same as running it locally.
         run: |
-          (cd src/Host/bin/Release/net8.0 && ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" dotnet Host.dll) &
+          (cd src/Host/bin/Release/net10.0 && ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" dotnet Host.dll) &
           for i in $(seq 1 30); do
             curl -sf http://localhost:5000/health/live && exit 0
             sleep 1
@@ -164,7 +164,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - run: dotnet build src/Host -c Release
       - name: Start the Host against the service-container Postgres
         # Working directory matters: appsettings.json lives next to Host.dll, and .NET's
@@ -172,7 +172,7 @@ jobs:
         # this from the repo root (the job's default cwd) makes every connection string resolve
         # to null and crash on startup. cd into the output dir first, same as running it locally.
         run: |
-          (cd src/Host/bin/Release/net8.0 && ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" dotnet Host.dll) &
+          (cd src/Host/bin/Release/net10.0 && ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" dotnet Host.dll) &
           for i in $(seq 1 30); do
             curl -sf http://localhost:5000/health/live && exit 0
             sleep 1

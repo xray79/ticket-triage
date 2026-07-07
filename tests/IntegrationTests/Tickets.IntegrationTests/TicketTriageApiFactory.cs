@@ -20,8 +20,7 @@ namespace Tickets.IntegrationTests;
 /// </summary>
 public sealed class TicketTriageApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("ticket_triage")
         .WithUsername("ticket_triage")
         .WithPassword("ticket_triage")
