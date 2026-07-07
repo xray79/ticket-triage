@@ -3,7 +3,7 @@ title = "ticket-triage gitleaks config"
 [extend]
 useDefault = true
 
-[[allowlists]]
+[allowlist]
 description = """
 Known, documented dev-only placeholder values committed intentionally for
 docker compose/local dev convenience — never used for any real deployment
