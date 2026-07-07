@@ -14,7 +14,7 @@
           <a routerLink="/admin/org-settings">Org policy</a>
         }
         <span class="topnav__user">{{ auth.displayName() }}</span>
-        <button type="button" (click)="logout()">Sign out</button>
+        <button type="button" tuiButton appearance="outline" size="s" (click)="logout()">Sign out</button>
       </div>
     </nav>
   }

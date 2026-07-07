@@ -5,32 +5,16 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <span class="badge" role="status">
+    <span
+      class="inline-flex items-center rounded-full border border-blue-300 bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-900"
+      role="status"
+    >
       {{ providerLabel() }}
       @if (wasFallback) {
-        <span class="badge__fallback"> (local fallback used)</span>
+        <span class="ml-1 font-medium italic"> (local fallback used)</span>
       }
     </span>
-  `,
-  styles: [
-    `
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.15rem 0.55rem;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        background: #e6eefc;
-        color: #163b7a;
-        border: 1px solid #b3caf0;
-      }
-      .badge__fallback {
-        font-weight: 500;
-        font-style: italic;
-      }
-    `
-  ]
+  `
 })
 export class ProviderBadgeComponent {
   @Input({ required: true }) provider: string | null = null;
