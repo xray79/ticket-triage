@@ -13,15 +13,16 @@ public static class UserPreferencesEndpoints
         group.MapGet("/", async (ISender sender, ICurrentUserAccessor currentUser, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetProviderPreferenceQuery(currentUser.UserId), ct);
-            return result.IsSuccess ? Results.Ok(new { providerPreference = result.Value }) : Results.NotFound(result.Error.Message);
-        });
+            return result.IsSuccess ? Results.Ok(new ProviderPreferenceResponse(result.Value)) : Results.NotFound(result.Error.Message);
+        }).Produces<ProviderPreferenceResponse>().Produces<string>(404);
 
         group.MapPut("/", async (SetProviderPreferenceRequest request, ISender sender, ICurrentUserAccessor currentUser, CancellationToken ct) =>
         {
             var result = await sender.Send(new SetProviderPreferenceCommand(currentUser.UserId, request.ProviderPreference), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error.Message);
-        });
+        }).Produces(204).Produces<string>(400);
     }
 
     public sealed record SetProviderPreferenceRequest(string ProviderPreference);
+    public sealed record ProviderPreferenceResponse(string ProviderPreference);
 }

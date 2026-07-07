@@ -24,33 +24,33 @@ public static class TicketsEndpoints
             var command = new CreateTicketCommand(
                 request.Subject, request.Body, request.CustomerEmail, effectiveProvider, currentUser.UserId);
             var result = await sender.Send(command, ct);
-            return result.IsSuccess ? Results.Created($"/api/tickets/{result.Value}", new { id = result.Value }) : Results.BadRequest(result.Error.Message);
-        }).RequireAuthorization(Permissions.TriageTickets);
+            return result.IsSuccess ? Results.Created($"/api/tickets/{result.Value}", new IdResponse(result.Value)) : Results.BadRequest(result.Error.Message);
+        }).RequireAuthorization(Permissions.TriageTickets).Produces<IdResponse>(201).Produces<string>(400);
 
         group.MapGet("/", async (ISender sender, CancellationToken ct, string? status) =>
         {
             TicketStatus? parsedStatus = status is not null && Enum.TryParse<TicketStatus>(status, true, out var s) ? s : null;
             var result = await sender.Send(new ListTicketsQuery(parsedStatus), ct);
             return Results.Ok(result);
-        }).RequireAuthorization(Permissions.ViewTickets);
+        }).RequireAuthorization(Permissions.ViewTickets).Produces<IReadOnlyList<TicketSummaryDto>>();
 
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new GetTicketQuery(id), ct);
             return result.IsSuccess ? Results.Ok(result.Value) : Results.NotFound(result.Error.Message);
-        }).RequireAuthorization(Permissions.ViewTickets);
+        }).RequireAuthorization(Permissions.ViewTickets).Produces<TicketDto>().Produces<string>(404);
 
         group.MapPost("/{id:guid}/resolve", async (Guid id, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new ResolveTicketCommand(id), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error.Message);
-        }).RequireAuthorization(Permissions.ResolveTickets);
+        }).RequireAuthorization(Permissions.ResolveTickets).Produces(204).Produces<string>(400);
 
         group.MapPost("/{id:guid}/assign", async (Guid id, AssignTicketRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new AssignTicketCommand(id, request.AssigneeUserId), ct);
             return result.IsSuccess ? Results.NoContent() : Results.BadRequest(result.Error.Message);
-        }).RequireAuthorization(Permissions.ReassignTickets);
+        }).RequireAuthorization(Permissions.ReassignTickets).Produces(204).Produces<string>(400);
     }
 
     /// <summary>

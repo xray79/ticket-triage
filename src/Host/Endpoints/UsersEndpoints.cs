@@ -13,8 +13,8 @@ public static class UsersEndpoints
         group.MapPost("/", async (RegisterUserRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new RegisterUserCommand(request.Email, request.Password, request.DisplayName, request.Role), ct);
-            return result.IsSuccess ? Results.Created($"/api/users/{result.Value}", new { id = result.Value }) : Results.BadRequest(result.Error.Message);
-        });
+            return result.IsSuccess ? Results.Created($"/api/users/{result.Value}", new IdResponse(result.Value)) : Results.BadRequest(result.Error.Message);
+        }).Produces<IdResponse>(201).Produces<string>(400);
     }
 
     public sealed record RegisterUserRequest(string Email, string Password, string DisplayName, string Role);
