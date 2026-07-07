@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { TuiButton, TuiRoot } from '@taiga-ui/core';
 import { AuthService } from './core/auth/auth.service';
@@ -7,6 +7,7 @@ import { AuthService } from './core/auth/auth.service';
     selector: 'app-root',
     imports: [RouterOutlet, RouterLink, TuiRoot, TuiButton],
     templateUrl: './app.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './app.component.scss'
 })
 export class AppComponent {
