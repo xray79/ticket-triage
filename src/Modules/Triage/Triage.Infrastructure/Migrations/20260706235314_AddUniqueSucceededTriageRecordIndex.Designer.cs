@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Triage.Infrastructure;
@@ -11,9 +12,11 @@ using Triage.Infrastructure;
 namespace Triage.Infrastructure.Migrations
 {
     [DbContext(typeof(TriageDbContext))]
-    partial class TriageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260706235314_AddUniqueSucceededTriageRecordIndex")]
+    partial class AddUniqueSucceededTriageRecordIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

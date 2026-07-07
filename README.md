@@ -6,24 +6,31 @@ with automatic local fallback), and the result — category, priority, summary, 
 reply — shows up on the ticket with the provider that produced it clearly labeled.
 
 Built as a .NET 8 modular monolith + Angular frontend, following the staged delivery
-plan in [`docs/architecture-plan.md`](docs/architecture-plan.md). **Stage 0 (the MVP)
-is complete**, plus **Add-on A** (multi-provider resilience: bulkhead concurrency
-limiting, per-provider telemetry, per-user provider preference, org-wide force-local-only
-policy), **Add-on B** (OpenTelemetry tracing/metrics, security headers, Redis-backed
-triage result caching with an in-memory fallback), **Add-on C** (Notifications and
-Reporting modules), **Add-on D** (a live-verified WCAG 2.1 AA accessibility pass,
-ADRs, and presentation polish), stretch stage **S1** (Triage extracted into its own
-deployable, `src/TriageService/TriageService.Host` — see ADR 006), and stretch stage
-**S2** (an LLM eval harness, `tools/Triage.Eval`, scoring fixed sample tickets for
-category/priority/summary quality per provider), stretch stage **S3** (a
-concurrent-ingestion load test — see
-[`docs/load-test-report.md`](docs/load-test-report.md)), and stretch stage **S4**
-(RFCs for the decisions that had real alternatives — see [`docs/rfc`](docs/rfc)), and
-stretch stage **S5** (a STRIDE threat model for the AI boundary — see
-[`docs/threat-model-ai-boundary.md`](docs/threat-model-ai-boundary.md)), and stretch
-stage **S6** (a real simulated incident + blameless postmortem — see
-[`docs/postmortems/001-poison-outbox-message.md`](docs/postmortems/001-poison-outbox-message.md))
-— see the plan for what's still optional (stretch stage S7).
+plan in [`docs/architecture-plan.md`](docs/architecture-plan.md). **Stage 0 (the MVP),
+Add-ons A–D, and stretch stages S1–S7 are all complete** — the full plan, not just
+the MVP:
+
+- **Add-on A** — multi-provider resilience (bulkhead concurrency limiting, per-provider
+  telemetry, per-user provider preference, org-wide force-local-only policy)
+- **Add-on B** — OpenTelemetry tracing/metrics, security headers, Redis-backed triage
+  result caching with an in-memory fallback
+- **Add-on C** — Notifications and Reporting modules
+- **Add-on D** — a live-verified WCAG 2.1 AA accessibility pass, ADRs, presentation polish
+- **S1** — Triage extracted into its own deployable, `src/TriageService/TriageService.Host`
+  (ADR 006)
+- **S2** — an LLM eval harness, `tools/Triage.Eval`, scoring fixed sample tickets for
+  category/priority/summary quality per provider
+- **S3** — a concurrent-ingestion load test ([`docs/load-test-report.md`](docs/load-test-report.md))
+- **S4** — RFCs for decisions that had real alternatives ([`docs/rfc`](docs/rfc))
+- **S5** — a STRIDE threat model for the AI boundary
+  ([`docs/threat-model-ai-boundary.md`](docs/threat-model-ai-boundary.md))
+- **S6** — a real simulated incident + blameless postmortem
+  ([`docs/postmortems/001-poison-outbox-message.md`](docs/postmortems/001-poison-outbox-message.md))
+- **S7** — one hard concurrency problem, explained: two workers racing on a redelivered
+  `TicketCreated` ([`docs/concurrency/001-redelivered-ticket-created-race.md`](docs/concurrency/001-redelivered-ticket-created-race.md))
+
+See the plan and each stage's own section below for what was verified live vs. documented
+as a sandbox limitation.
 
 ## Architecture
 
@@ -340,8 +347,7 @@ harness's CI workflow (`triage-eval.yml`) wasn't run live for the same
 Docker-image-pull reason. The load test could only exercise the synchronous ticket-
 creation path — SQS queue depth, Ollama latency under concurrency, and the cloud
 provider circuit breaker weren't observable here for the same reasons (see
-`docs/load-test-report.md`'s "Scope and limitations"). Stretch stage S7 is not
-started.
+`docs/load-test-report.md`'s "Scope and limitations").
 
 **Stretch stage S4 (RFCs for decisions with real alternatives):** [`docs/rfc`](docs/rfc)
 has three — redact-then-triage vs. triage-raw-and-redact-only-on-cloud-escalation
@@ -389,6 +395,27 @@ by three new tests in `Shared.Infrastructure.Tests` against a real EF Core `DbCo
 reproducing the exact mechanism, not just the symptom. The postmortem also documents follow-ups
 not done here (a real dead-letter surface, a max-retry policy for transient failures, and a
 metric for abandoned messages) rather than treating the one fix as the whole answer.
+
+**Stretch stage S7 (one hard concurrency problem, explained):**
+[`docs/concurrency/001-redelivered-ticket-created-race.md`](docs/concurrency/001-redelivered-ticket-created-race.md)
+walks through two workers racing on a redelivered `TicketCreated` — the plan's own named
+example. **The finding:** the existing "does a triage record already exist for this ticket"
+check only closes the race in the sequential case; it's a classic TOCTOU gap under genuine
+concurrency (two workers' `SELECT`s can both return "not yet" before either `INSERT` commits),
+and — confirmed by reading `TriageRecordConfiguration` — nothing backed it at the database
+level; the index on `TicketId` was never unique. **Fixed:** a unique, filtered index
+(`TicketId` where `Succeeded = true` — filtered so a failed attempt never blocks a later
+successful retry), plus `ITriageUnitOfWork.TrySaveChangesAsync` catching specifically a
+Postgres unique-violation and reporting the loss back to the handler as a safe no-op instead of
+a crash. Because the outbox row for `TicketTriaged` is appended in the same `SaveChangesAsync`
+call as the `TriageRecord` insert, the losing worker's event rolls back in the same
+transaction — it never publishes a duplicate. Verified three ways: `TriageRecordUniquenessTests`
+against real SQLite (deliberately not the InMemory provider, which doesn't enforce unique
+indexes at all) proves the constraint itself rejects a concurrent duplicate; a new
+`TicketCreatedIntegrationEventHandlerTests` case proves the handler treats losing the race as a
+safe no-op; and, live against this environment's actual Postgres, a manual two-row `INSERT`
+inside a transaction reproduced the exact real
+`duplicate key value violates unique constraint` error the fix is built to handle.
 
 ## ADRs
 

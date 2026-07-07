@@ -27,6 +27,7 @@ public sealed class TicketCreatedIntegrationEventHandlerTests
     {
         var repository = Substitute.For<ITriageRecordRepository>();
         var unitOfWork = Substitute.For<ITriageUnitOfWork>();
+        unitOfWork.TrySaveChangesAsync(Arg.Any<CancellationToken>()).Returns(true);
         var redaction = Substitute.For<IRedactionEngine>();
         redaction.RedactAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(ci => NoOpRedaction((string)ci[0], (string)ci[1]));
@@ -51,6 +52,7 @@ public sealed class TicketCreatedIntegrationEventHandlerTests
     {
         var repository = Substitute.For<ITriageRecordRepository>();
         var unitOfWork = Substitute.For<ITriageUnitOfWork>();
+        unitOfWork.TrySaveChangesAsync(Arg.Any<CancellationToken>()).Returns(true);
         var redaction = Substitute.For<IRedactionEngine>();
         redaction.RedactAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(ci => NoOpRedaction((string)ci[0], (string)ci[1]));
@@ -66,5 +68,36 @@ public sealed class TicketCreatedIntegrationEventHandlerTests
 
         await orchestrator.DidNotReceive().TriageAsync(Arg.Any<string>(), Arg.Any<TicketContent>(), Arg.Any<CancellationToken>());
         repository.Received(1).Add(Arg.Is<TriageRecord>(r => r.Succeeded && r.Category == "technical" && r.Provider == "openai"));
+    }
+
+    /// <summary>
+    /// Simulates the redelivery race this handler's idempotency check alone can't close (see
+    /// docs/concurrency/001-redelivered-ticket-created-race.md): another worker's insert won the
+    /// unique-index race first, so TrySaveChangesAsync reports the loss. HandleAsync must treat
+    /// that as a safe no-op — not retry, not throw, not fall through to the failure path.
+    /// </summary>
+    [Fact]
+    public async Task HandleAsync_treats_losing_the_unique_index_race_as_a_safe_no_op()
+    {
+        var repository = Substitute.For<ITriageRecordRepository>();
+        var unitOfWork = Substitute.For<ITriageUnitOfWork>();
+        unitOfWork.TrySaveChangesAsync(Arg.Any<CancellationToken>()).Returns(false);
+        var redaction = Substitute.For<IRedactionEngine>();
+        redaction.RedactAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(ci => NoOpRedaction((string)ci[0], (string)ci[1]));
+        var orchestrator = Substitute.For<ITriageOrchestrator>();
+        var result = new TriageResult("billing", "high", "summary", "draft");
+        orchestrator.TriageAsync(Arg.Any<string>(), Arg.Any<TicketContent>(), Arg.Any<CancellationToken>())
+            .Returns(new TriageAttempt(result, "local", false));
+        var cache = Substitute.For<ITriageResultCache>();
+        cache.GetAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((CachedTriageAttempt?)null);
+
+        var handler = new TicketCreatedIntegrationEventHandler(redaction, orchestrator, cache, repository, unitOfWork, NullLogger<TicketCreatedIntegrationEventHandler>.Instance);
+
+        var act = () => handler.HandleAsync(MakeEvent(), CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+        repository.Received(1).Add(Arg.Is<TriageRecord>(r => r.Succeeded));
+        repository.DidNotReceive().Add(Arg.Is<TriageRecord>(r => !r.Succeeded));
     }
 }
