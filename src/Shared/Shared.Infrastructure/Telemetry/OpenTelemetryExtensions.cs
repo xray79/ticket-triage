@@ -1,22 +1,25 @@
-using OpenTelemetry.Logs;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Triage.Application.Providers;
 
-namespace Host.Telemetry;
+namespace Shared.Infrastructure.Telemetry;
 
 /// <summary>
-/// Traces the redaction pass and the LLM call as spans (via ASP.NET Core/HttpClient/EF Core
-/// auto-instrumentation) and exports TriageMetrics' counters — end to end including the async
-/// SQS hop, since the correlation id set by CorrelationIdMiddleware rides along in log scope
-/// and this pipeline's traces share the same activity context. Exports to an OTLP collector
-/// when configured (real environments); otherwise to the console, so tracing is visible
-/// without standing up Tempo/Jaeger/X-Ray just to run locally.
+/// Traces ASP.NET Core/HttpClient/EF Core spans and exports any given meters (e.g. a module's own
+/// counters/histograms) — shared by every deployable in the solution (the main Host and any
+/// extracted service) so each gets identical tracing/metrics wiring, distinguished only by its own
+/// service name and whichever extra meters it owns. Exports to an OTLP collector when configured
+/// (real environments); otherwise to the console, so tracing is visible without standing up
+/// Tempo/Jaeger/X-Ray just to run locally.
 /// </summary>
 public static class OpenTelemetryExtensions
 {
-    public static IServiceCollection AddTicketTriageTelemetry(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddTicketTriageTelemetry(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        params string[] additionalMeterNames)
     {
         var otlpEndpoint = configuration["Otel:OtlpEndpoint"];
         var serviceName = configuration["Otel:ServiceName"] ?? "TicketTriage.Host";
@@ -43,8 +46,10 @@ public static class OpenTelemetryExtensions
                     .SetResourceBuilder(resourceBuilder)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation()
-                    .AddMeter(TriageMetrics.MeterName);
+                    .AddRuntimeInstrumentation();
+
+                foreach (var meterName in additionalMeterNames)
+                    metrics.AddMeter(meterName);
 
                 if (!string.IsNullOrWhiteSpace(otlpEndpoint))
                     metrics.AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));

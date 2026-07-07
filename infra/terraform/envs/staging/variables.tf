@@ -23,6 +23,11 @@ variable "api_image" {
   description = "Full ECR image URI:tag built by CI, e.g. <account>.dkr.ecr.us-east-1.amazonaws.com/ticket-triage-api:abc123."
 }
 
+variable "triage_service_image" {
+  type        = string
+  description = "Full ECR image URI:tag built by CI, e.g. <account>.dkr.ecr.us-east-1.amazonaws.com/ticket-triage-triage-service:abc123."
+}
+
 variable "db_master_password" {
   type      = string
   sensitive = true
