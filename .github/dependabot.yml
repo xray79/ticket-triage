@@ -4,7 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
     groups:
+      nuget-major:
+        update-types: ["major"]
       nuget-minor-patch:
         update-types: ["minor", "patch"]
 
@@ -12,7 +15,10 @@ updates:
     directory: "/frontend/apps/agent-console"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
     groups:
+      npm-major:
+        update-types: ["major"]
       npm-minor-patch:
         update-types: ["minor", "patch"]
 
@@ -20,6 +26,9 @@ updates:
     directory: "/loadtest"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 3
     groups:
+      npm-major:
+        update-types: ["major"]
       npm-minor-patch:
         update-types: ["minor", "patch"]
