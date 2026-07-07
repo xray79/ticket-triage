@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY TicketTriage.sln .
@@ -18,7 +18,7 @@ COPY src/ src/
 
 RUN dotnet publish src/TriageService/TriageService.Host/TriageService.Host.csproj -c Release -o /app --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app .
 EXPOSE 8080
