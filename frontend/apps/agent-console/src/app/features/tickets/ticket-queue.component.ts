@@ -9,11 +9,10 @@ import { TicketSummary } from '../../core/models/ticket.models';
 import { PriorityBadgeComponent } from '../../shared/ui/priority-badge.component';
 
 @Component({
-  selector: 'app-ticket-queue',
-  standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe, PriorityBadgeComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-ticket-queue',
+    imports: [FormsModule, RouterLink, DatePipe, PriorityBadgeComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <section class="queue">
       <header class="queue__header">
         <h1>Ticket queue</h1>
@@ -79,8 +78,8 @@ import { PriorityBadgeComponent } from '../../shared/ui/priority-badge.component
       }
     </section>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .queue {
         max-width: 960px;
         margin: 2rem auto;
@@ -132,7 +131,7 @@ import { PriorityBadgeComponent } from '../../shared/ui/priority-badge.component
         clip: rect(0 0 0 0);
       }
     `
-  ]
+    ]
 })
 export class TicketQueueComponent implements OnInit {
   readonly tickets = signal<TicketSummary[]>([]);

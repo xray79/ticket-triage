@@ -3,11 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { UsersApi } from '../../core/api/users.api';
 
 @Component({
-  selector: 'app-user-management',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-user-management',
+    imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <section class="admin">
       <h1>Add agent</h1>
       <form (ngSubmit)="submit()" aria-label="Register a new agent">
@@ -34,8 +33,8 @@ import { UsersApi } from '../../core/api/users.api';
       </form>
     </section>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .admin {
         max-width: 420px;
         margin: 2rem auto;
@@ -69,7 +68,7 @@ import { UsersApi } from '../../core/api/users.api';
         outline-offset: 2px;
       }
     `
-  ]
+    ]
 })
 export class UserManagementComponent {
   displayName = '';

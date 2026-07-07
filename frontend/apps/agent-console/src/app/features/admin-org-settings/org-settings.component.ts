@@ -3,11 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { PreferencesApi } from '../../core/api/preferences.api';
 
 @Component({
-  selector: 'app-org-settings',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-org-settings',
+    imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <section class="org-settings">
       <h1>Organization policy</h1>
 
@@ -33,8 +32,8 @@ import { PreferencesApi } from '../../core/api/preferences.api';
       }
     </section>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .org-settings {
         max-width: 560px;
         margin: 2rem auto;
@@ -57,7 +56,7 @@ import { PreferencesApi } from '../../core/api/preferences.api';
         outline-offset: 2px;
       }
     `
-  ]
+    ]
 })
 export class OrgSettingsComponent implements OnInit {
   readonly loading = signal(true);

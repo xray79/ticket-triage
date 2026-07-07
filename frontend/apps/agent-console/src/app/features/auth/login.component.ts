@@ -4,11 +4,10 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-login',
+    imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <main class="login">
       <form class="login__card" (ngSubmit)="submit()" aria-labelledby="login-heading">
         <h1 id="login-heading">Ticket Triage — Sign in</h1>
@@ -36,8 +35,8 @@ import { AuthService } from '../../core/auth/auth.service';
       </form>
     </main>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .login {
         min-height: 100vh;
         display: flex;
@@ -93,7 +92,7 @@ import { AuthService } from '../../core/auth/auth.service';
         margin: 0;
       }
     `
-  ]
+    ]
 })
 export class LoginComponent {
   email = '';

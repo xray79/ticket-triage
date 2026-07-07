@@ -73,3 +73,4 @@ crash.log
 
 # Local dev
 *.local.json
+test-results/

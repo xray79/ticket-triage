@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/apps/agent-console/package-lock.json
       - run: npm ci
@@ -77,14 +77,14 @@ jobs:
           ! grep -q "has the following vulnerable packages" vulnerable.txt
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/apps/agent-console/package-lock.json
       - name: npm audit (agent-console)
         working-directory: frontend/apps/agent-console
-        # Report-only for now: Angular 18.2's own advisories (GHSA-g93w-mfhg-p222 and others)
-        # only clear on a major-version bump to 21.x, which is a real, separate upgrade project,
-        # not something to silently force here. Non-fatal so this still surfaces in CI output.
+        # Report-only for now: the remaining high-severity finding is a ReDoS in minimatch,
+        # pulled in transitively via @taiga-ui/cdk's ng-morph dependency, with no non-breaking
+        # fix available upstream yet. Non-fatal so this still surfaces in CI output.
         run: npm ci && npm audit --omit=dev --audit-level=high
         continue-on-error: true
 
@@ -129,7 +129,7 @@ jobs:
           exit 1
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/apps/agent-console/package-lock.json
       - run: npm ci
@@ -181,7 +181,7 @@ jobs:
           exit 1
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/apps/agent-console/package-lock.json
       - run: npm ci

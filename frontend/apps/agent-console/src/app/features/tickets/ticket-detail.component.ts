@@ -8,11 +8,10 @@ import { PriorityBadgeComponent } from '../../shared/ui/priority-badge.component
 import { ProviderBadgeComponent } from '../../shared/ui/provider-badge.component';
 
 @Component({
-  selector: 'app-ticket-detail',
-  standalone: true,
-  imports: [RouterLink, DatePipe, PriorityBadgeComponent, ProviderBadgeComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-ticket-detail',
+    imports: [RouterLink, DatePipe, PriorityBadgeComponent, ProviderBadgeComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <section class="detail">
       <a routerLink="/tickets">&larr; Back to queue</a>
 
@@ -59,8 +58,8 @@ import { ProviderBadgeComponent } from '../../shared/ui/provider-badge.component
       }
     </section>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .detail {
         max-width: 720px;
         margin: 2rem auto;
@@ -110,7 +109,7 @@ import { ProviderBadgeComponent } from '../../shared/ui/provider-badge.component
         cursor: not-allowed;
       }
     `
-  ]
+    ]
 })
 export class TicketDetailComponent implements OnInit {
   readonly ticket = signal<TicketDetail | null>(null);
