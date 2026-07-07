@@ -101,6 +101,10 @@ minutes while Ollama pulls its model; subsequent runs are fast.
   `Identity:SeedAdmin:Email` / `Identity:SeedAdmin:Password`
   (defaults in `appsettings.Development.json`: `admin@ticket-triage.local` /
   `ChangeMe123!` — dev-only, not a real secret, change before any shared deploy).
+- The JWT signing key in `appsettings.Development.json`/`docker-compose.yml` is the
+  same kind of dev-only placeholder — real environments source `Jwt:SigningKey` from
+  a secret manager (see `appsettings.json`'s own placeholder value). Allowlisted in
+  `.gitleaks.toml` for exactly this reason, not because it's exempt from scanning.
 
 ### Running the backend without Docker
 
