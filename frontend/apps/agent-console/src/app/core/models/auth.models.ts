@@ -1,14 +1,5 @@
-export interface AuthResult {
-  accessToken: string;
-  accessTokenExpiresAtUtc: string;
-  refreshToken: string;
-  userId: string;
-  email: string;
-  displayName: string;
-  roles: string[];
-}
+import type { AuthResultDto, LoginRequest as GeneratedLoginRequest } from '../api/generated/api-types';
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+export type AuthResult = Required<AuthResultDto>;
+
+export type LoginRequest = Required<GeneratedLoginRequest>;

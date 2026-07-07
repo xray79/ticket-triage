@@ -14,6 +14,6 @@ public static class ReportingEndpoints
         {
             var summary = await sender.Send(new GetReportingSummaryQuery(), ct);
             return Results.Ok(summary);
-        });
+        }).Produces<ReportingSummaryDto>();
     }
 }

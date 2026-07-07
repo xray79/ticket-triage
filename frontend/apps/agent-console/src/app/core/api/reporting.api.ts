@@ -2,22 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ProviderBreakdownDto, ReportingSummaryDto } from './generated/api-types';
 
-export interface ProviderBreakdown {
-  provider: string;
-  count: number;
-  fallbackCount: number;
-}
-
-export interface ReportingSummary {
-  totalTickets: number;
-  newCount: number;
-  triagedCount: number;
-  resolvedCount: number;
-  triageFailedCount: number;
-  averageTriageLatencySeconds: number | null;
-  byProvider: ProviderBreakdown[];
-}
+export type ReportingSummary = Omit<Required<ReportingSummaryDto>, 'byProvider'> & {
+  byProvider: Required<ProviderBreakdownDto>[];
+};
 
 @Injectable({ providedIn: 'root' })
 export class ReportingApi {
