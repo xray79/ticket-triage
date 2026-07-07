@@ -56,6 +56,13 @@ jobs:
       - uses: github/codeql-action/init@v3
         with:
           languages: csharp, javascript-typescript
+      # CodeQL's C# extractor traces the actual compiler invocation — with no build step it has
+      # nothing to analyze and fails with "detected code written in C# but could not process any
+      # of it." javascript-typescript doesn't need this (CodeQL parses it directly).
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build TicketTriage.sln
       - uses: github/codeql-action/analyze@v3
 
   infra-plan:
