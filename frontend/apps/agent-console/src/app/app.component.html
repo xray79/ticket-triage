@@ -1,21 +1,23 @@
-@if (auth.isAuthenticated()) {
-  <nav class="topnav" aria-label="Primary">
-    <a routerLink="/tickets" class="topnav__brand">Ticket Triage</a>
-    <div class="topnav__links">
-      <a routerLink="/settings/provider">Provider settings</a>
-      @if (auth.hasPermission('reporting:view')) {
-        <a routerLink="/reporting">Reporting</a>
-      }
-      @if (auth.hasPermission('users:manage')) {
-        <a routerLink="/admin/users">Users</a>
-      }
-      @if (auth.hasPermission('org:manage-settings')) {
-        <a routerLink="/admin/org-settings">Org policy</a>
-      }
-      <span class="topnav__user">{{ auth.displayName() }}</span>
-      <button type="button" (click)="logout()">Sign out</button>
-    </div>
-  </nav>
-}
+<tui-root>
+  @if (auth.isAuthenticated()) {
+    <nav class="topnav" aria-label="Primary">
+      <a routerLink="/tickets" class="topnav__brand">Ticket Triage</a>
+      <div class="topnav__links">
+        <a routerLink="/settings/provider">Provider settings</a>
+        @if (auth.hasPermission('reporting:view')) {
+          <a routerLink="/reporting">Reporting</a>
+        }
+        @if (auth.hasPermission('users:manage')) {
+          <a routerLink="/admin/users">Users</a>
+        }
+        @if (auth.hasPermission('org:manage-settings')) {
+          <a routerLink="/admin/org-settings">Org policy</a>
+        }
+        <span class="topnav__user">{{ auth.displayName() }}</span>
+        <button type="button" (click)="logout()">Sign out</button>
+      </div>
+    </nav>
+  }
 
-<router-outlet />
+  <router-outlet />
+</tui-root>
