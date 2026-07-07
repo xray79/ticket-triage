@@ -9,11 +9,10 @@ interface ProviderOption {
 }
 
 @Component({
-  selector: 'app-provider-settings',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-provider-settings',
+    imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <section class="settings">
       <h1>Triage provider</h1>
       <p class="settings__intro">
@@ -51,8 +50,8 @@ interface ProviderOption {
       }
     </section>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .settings {
         max-width: 560px;
         margin: 2rem auto;
@@ -83,7 +82,7 @@ interface ProviderOption {
         outline-offset: 2px;
       }
     `
-  ]
+    ]
 })
 export class ProviderSettingsComponent implements OnInit {
   readonly loading = signal(true);

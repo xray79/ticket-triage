@@ -4,11 +4,10 @@ import { TuiButton, TuiRoot } from '@taiga-ui/core';
 import { AuthService } from './core/auth/auth.service';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, TuiRoot, TuiButton],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+    selector: 'app-root',
+    imports: [RouterOutlet, RouterLink, TuiRoot, TuiButton],
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.scss'
 })
 export class AppComponent {
   constructor(
