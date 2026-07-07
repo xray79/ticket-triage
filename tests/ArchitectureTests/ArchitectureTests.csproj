@@ -39,6 +39,14 @@
     <ProjectReference Include="..\..\src\Shared\Shared.Kernel\Shared.Kernel.csproj" />
     <ProjectReference Include="..\..\src\Shared\Shared.Abstractions\Shared.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\Shared\Shared.Infrastructure\Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Domain\Notifications.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Application\Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Infrastructure\Notifications.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\Notifications.Contracts\Notifications.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Domain\Reporting.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Application\Reporting.Application.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Infrastructure\Reporting.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Reporting\Reporting.Contracts\Reporting.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

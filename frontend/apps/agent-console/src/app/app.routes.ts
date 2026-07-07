@@ -37,5 +37,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/settings/provider-settings.component').then((m) => m.ProviderSettingsComponent)
   },
+  {
+    path: 'reporting',
+    canActivate: [authGuard, permissionGuard('reporting:view')],
+    loadComponent: () =>
+      import('./features/reporting/reporting-dashboard.component').then((m) => m.ReportingDashboardComponent)
+  },
   { path: '**', redirectTo: 'tickets' }
 ];

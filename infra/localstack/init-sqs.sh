@@ -18,5 +18,7 @@ create_queue_with_dlq() {
 
 create_queue_with_dlq "tickets-inbox"
 create_queue_with_dlq "triage-inbox"
+create_queue_with_dlq "notifications-inbox"
+create_queue_with_dlq "reporting-inbox"
 
-echo "SQS queues ready: tickets-inbox, triage-inbox (+ DLQs)"
+echo "SQS queues ready: tickets-inbox, triage-inbox, notifications-inbox, reporting-inbox (+ DLQs)"

@@ -3,6 +3,9 @@
     <a routerLink="/tickets" class="topnav__brand">Ticket Triage</a>
     <div class="topnav__links">
       <a routerLink="/settings/provider">Provider settings</a>
+      @if (auth.hasPermission('reporting:view')) {
+        <a routerLink="/reporting">Reporting</a>
+      }
       @if (auth.hasPermission('users:manage')) {
         <a routerLink="/admin/users">Users</a>
       }

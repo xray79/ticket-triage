@@ -21,7 +21,7 @@ jobs:
         run: dotnet test tests/ArchitectureTests --no-build -c Release
       - name: Unit tests (with coverage)
         run: |
-          for proj in tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests; do
+          for proj in tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests; do
             dotnet test "$proj" --no-build -c Release --collect:"XPlat Code Coverage"
           done
       - name: Integration tests (Testcontainers Postgres)

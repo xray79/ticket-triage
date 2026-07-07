@@ -21,7 +21,7 @@ public sealed class TriageRecord : AggregateRoot<Guid>
 
     public static TriageRecord CreateSucceeded(
         Guid ticketId, string category, string priority, string summary, string draftReply,
-        string provider, bool wasFallback)
+        string provider, bool wasFallback, string customerEmail)
     {
         var record = new TriageRecord
         {
@@ -38,7 +38,7 @@ public sealed class TriageRecord : AggregateRoot<Guid>
         };
 
         record.Raise(new TicketTriaged(
-            Guid.NewGuid(), DateTimeOffset.UtcNow, ticketId, category, priority, summary, draftReply, provider, wasFallback));
+            Guid.NewGuid(), DateTimeOffset.UtcNow, ticketId, category, priority, summary, draftReply, provider, wasFallback, customerEmail));
 
         return record;
     }

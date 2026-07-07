@@ -9,8 +9,9 @@ Built as a .NET 8 modular monolith + Angular frontend, following the staged deli
 plan in [`docs/architecture-plan.md`](docs/architecture-plan.md). **Stage 0 (the MVP)
 is complete**, plus **Add-on A** (multi-provider resilience: bulkhead concurrency
 limiting, per-provider telemetry, per-user provider preference, org-wide force-local-only
-policy) and **Add-on B** (OpenTelemetry tracing/metrics, security headers, Redis-backed
-triage result caching with an in-memory fallback) — see the plan for what's still optional.
+policy), **Add-on B** (OpenTelemetry tracing/metrics, security headers, Redis-backed
+triage result caching with an in-memory fallback), and **Add-on C** (Notifications and
+Reporting modules) — see the plan for what's still optional.
 
 ## Architecture
 
@@ -33,6 +34,14 @@ flowchart TB
         R3[Prompt mgmt, drafts]
     end
 
+    subgraph Notifications["Notifications"]
+        N1[Email on triage/resolve]
+    end
+
+    subgraph Reporting["Reporting"]
+        P1[Read-model, dashboards]
+    end
+
     subgraph Shared["Shared Kernel"]
         S1[Common types, result/error model, outbox, events]
     end
@@ -40,7 +49,13 @@ flowchart TB
     Host --> Identity
     Host --> Tickets
     Host --> Triage
+    Host --> Notifications
+    Host --> Reporting
     Tickets -.domain events via SQS.-> Triage
+    Tickets -.domain events.-> Notifications
+    Tickets -.domain events.-> Reporting
+    Triage -.domain events.-> Notifications
+    Triage -.domain events.-> Reporting
     Identity --> Shared
     Tickets --> Shared
     Triage --> Shared
@@ -75,7 +90,7 @@ project or async domain events — never another module's `Domain`/`Application`
 ```
 /src
   /Host                 ASP.NET Core Web API — composition root, DI wiring, middleware
-  /Modules/{Tickets,Triage,Identity}/*.{Domain,Application,Infrastructure,Contracts}
+  /Modules/{Tickets,Triage,Identity,Notifications,Reporting}/*.{Domain,Application,Infrastructure,Contracts}
   /Shared/{Shared.Kernel,Shared.Abstractions,Shared.Infrastructure}
 /tests
   /UnitTests             xUnit + NSubstitute + FluentAssertions
@@ -127,7 +142,8 @@ npm start
 ```bash
 # Backend
 dotnet test tests/ArchitectureTests
-dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests
+dotnet test tests/UnitTests/Tickets.Tests tests/UnitTests/Triage.Tests tests/UnitTests/Identity.Tests \
+  tests/UnitTests/Notifications.Tests tests/UnitTests/Reporting.Tests
 
 # Frontend
 cd frontend/apps/agent-console
@@ -143,7 +159,7 @@ cleanly at container startup rather than passing) — it should run in any envir
 with normal Docker Hub access, including GitHub Actions, but wasn't seen green in this
 session.
 
-## What's implemented (Stage 0 + Add-on A + Add-on B) vs. what's a documented follow-up
+## What's implemented (Stage 0 + Add-ons A/B/C) vs. what's a documented follow-up
 
 **Implemented and verified working end-to-end** (see the ADRs and the plan for
 detail): login/JWT/refresh with role+permission-based authorization, ticket
@@ -183,13 +199,32 @@ sandbox); the Redis health check registers itself only when Redis is actually
 configured, also live-verified (absent from `/health/ready` here, as
 expected).
 
+**Add-on C (Notifications & Reporting):** two new modules, both pure event
+consumers with their own schema — no other module reaches into their data.
+Notifications sends an email on `TicketTriaged`/`TicketResolved` (both events
+extended to carry `CustomerEmail` as a passthrough, since neither module may
+read the Tickets database directly), with per-(ticket, event-type) idempotency
+via a `NotificationLog` table, and a logging-only `IEmailSender` fallback when
+no SMTP host is configured (same fallback pattern as Redis/SQS) — live-verified
+via the DB schema migrating correctly and unit tests covering send/idempotency/
+missing-email behavior (no live SMTP in this sandbox). Reporting maintains an
+incrementally-updated read-model row per ticket and exposes
+`GET /api/reporting/summary` (ticket counts by status, average triage latency,
+per-provider fallback breakdown) plus an Angular dashboard (stat tiles + a bar
+chart) — live-verified end-to-end: the endpoint, its permission gate
+(`reporting:view`; confirmed 403 for Agent, 200 for Admin), and the dashboard
+page all work against the real API and render correctly in a real browser. The
+architecture test suite now covers all 5 modules (62 cases, up from 20).
+
 **Documented but not exercised in this environment:** the Terraform modules are
 written and pass `terraform fmt`/HCL review, but `terraform validate`/`plan`/`apply`
 were not run here (the sandbox's egress policy blocks the Terraform Registry and
 container registries) — review before a real `apply`. Multi-provider cloud triage
 (OpenAI/Anthropic/Gemini) is implemented but untested against live provider APIs.
-Notifications and Reporting modules, and the E2E/Playwright/OpenTelemetry/Redis
-pieces of the later add-on stages, are not started.
+The async SQS-triggered paths for Notifications/Reporting/Triage caching couldn't
+be driven end-to-end here (LocalStack/SQS isn't reachable in this sandbox, same
+limitation as Stage 0) — covered by unit tests instead of a live run. Add-on D
+(presentation polish) and the stretch stages (S1–S7) are not started.
 
 ## ADRs
 
