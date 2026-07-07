@@ -25,5 +25,17 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/admin-users/user-management.component').then((m) => m.UserManagementComponent)
   },
+  {
+    path: 'admin/org-settings',
+    canActivate: [authGuard, permissionGuard('org:manage-settings')],
+    loadComponent: () =>
+      import('./features/admin-org-settings/org-settings.component').then((m) => m.OrgSettingsComponent)
+  },
+  {
+    path: 'settings/provider',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/settings/provider-settings.component').then((m) => m.ProviderSettingsComponent)
+  },
   { path: '**', redirectTo: 'tickets' }
 ];

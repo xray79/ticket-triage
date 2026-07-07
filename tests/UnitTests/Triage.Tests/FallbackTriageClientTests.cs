@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -10,6 +11,17 @@ namespace Triage.Tests;
 
 public sealed class FallbackTriageClientTests
 {
+    private sealed class TestMeterFactory : IMeterFactory
+    {
+        public Meter Create(MeterOptions options) => new(options.Name);
+        public void Dispose() { }
+    }
+
+    private static ITriageConcurrencyLimiter CreateLimiter() =>
+        new TriageConcurrencyLimiter(new TriageConcurrencyOptions { MaxConcurrentTriages = 10, MaxQueuedTriages = 100 });
+
+    private static TriageMetrics CreateMetrics() => new(new TestMeterFactory());
+
     private static ITriageLlmClient MakeClient(string key, TriageResult? result = null, Exception? throws = null)
     {
         var client = Substitute.For<ITriageLlmClient>();
@@ -32,7 +44,7 @@ public sealed class FallbackTriageClientTests
         factory.Resolve("openai").Returns(openAi);
         factory.LocalClient.Returns(local);
 
-        var orchestrator = new FallbackTriageClient(factory, NullLogger<FallbackTriageClient>.Instance);
+        var orchestrator = new FallbackTriageClient(factory, CreateLimiter(), CreateMetrics(), NullLogger<FallbackTriageClient>.Instance);
         var ticket = new TicketContent(Guid.NewGuid(), "s", "b", "c@example.com");
 
         var attempt = await orchestrator.TriageAsync("openai", ticket, CancellationToken.None);
@@ -53,7 +65,7 @@ public sealed class FallbackTriageClientTests
         factory.Resolve("openai").Returns(openAi);
         factory.LocalClient.Returns(local);
 
-        var orchestrator = new FallbackTriageClient(factory, NullLogger<FallbackTriageClient>.Instance);
+        var orchestrator = new FallbackTriageClient(factory, CreateLimiter(), CreateMetrics(), NullLogger<FallbackTriageClient>.Instance);
         var ticket = new TicketContent(Guid.NewGuid(), "s", "b", "c@example.com");
 
         var attempt = await orchestrator.TriageAsync("openai", ticket, CancellationToken.None);
@@ -72,7 +84,7 @@ public sealed class FallbackTriageClientTests
         factory.Resolve("local").Returns(local);
         factory.LocalClient.Returns(local);
 
-        var orchestrator = new FallbackTriageClient(factory, NullLogger<FallbackTriageClient>.Instance);
+        var orchestrator = new FallbackTriageClient(factory, CreateLimiter(), CreateMetrics(), NullLogger<FallbackTriageClient>.Instance);
         var ticket = new TicketContent(Guid.NewGuid(), "s", "b", "c@example.com");
 
         var act = () => orchestrator.TriageAsync("local", ticket, CancellationToken.None);

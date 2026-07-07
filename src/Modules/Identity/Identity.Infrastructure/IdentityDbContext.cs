@@ -13,6 +13,7 @@ public sealed class IdentityDbContext : IdentityDbContext<ApplicationUser, Ident
     }
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<OrgSettingsEntity> OrgSettings => Set<OrgSettingsEntity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -25,6 +26,12 @@ public sealed class IdentityDbContext : IdentityDbContext<ApplicationUser, Ident
             rt.HasKey(x => x.Id);
             rt.Property(x => x.TokenHash).IsRequired().HasMaxLength(200);
             rt.HasIndex(x => x.TokenHash).IsUnique();
+        });
+
+        builder.Entity<OrgSettingsEntity>(os =>
+        {
+            os.ToTable("org_settings");
+            os.HasKey(x => x.Id);
         });
     }
 }

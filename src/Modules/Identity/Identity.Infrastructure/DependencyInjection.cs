@@ -77,7 +77,8 @@ public static class DependencyInjection
             foreach (var permission in new[]
             {
                 Permissions.ViewTickets, Permissions.TriageTickets, Permissions.ResolveTickets,
-                Permissions.ReassignTickets, Permissions.ManageUsers, Permissions.ViewReporting
+                Permissions.ReassignTickets, Permissions.ManageUsers, Permissions.ViewReporting,
+                Permissions.ManageOrgSettings
             })
             {
                 options.AddPolicy(permission, policy => policy.RequireClaim("permission", permission));
@@ -90,6 +91,8 @@ public static class DependencyInjection
         services.AddScoped<IUserRegistrationService, UserRegistrationService>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
+        services.AddScoped<IUserPreferenceService, UserPreferenceService>();
+        services.AddScoped<IOrgSettingsRepository, OrgSettingsRepository>();
 
         return services;
     }

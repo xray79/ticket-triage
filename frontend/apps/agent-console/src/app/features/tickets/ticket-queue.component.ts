@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { PreferencesApi } from '../../core/api/preferences.api';
 import { TicketsApi } from '../../core/api/tickets.api';
 import { TicketSummary } from '../../core/models/ticket.models';
 import { PriorityBadgeComponent } from '../../shared/ui/priority-badge.component';
@@ -41,6 +42,7 @@ import { PriorityBadgeComponent } from '../../shared/ui/priority-badge.component
             <option value="anthropic">Anthropic (opt-in)</option>
             <option value="gemini">Gemini (opt-in)</option>
           </select>
+          <small><a routerLink="/settings/provider">Change your default provider</a></small>
 
           <button type="submit" [disabled]="creating()">{{ creating() ? 'Creating…' : 'Create ticket' }}</button>
         </form>
@@ -145,11 +147,14 @@ export class TicketQueueComponent implements OnInit {
 
   constructor(
     private readonly ticketsApi: TicketsApi,
+    private readonly preferencesApi: PreferencesApi,
     readonly auth: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.reload();
+    const preference = await this.preferencesApi.getMyProviderPreference();
+    this.newProvider = preference.providerPreference;
   }
 
   async reload(): Promise<void> {
