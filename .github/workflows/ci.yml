@@ -137,6 +137,64 @@ jobs:
           npm run sync:api-contract
           git diff --exit-code -- openapi.json src/app/core/api/generated/schema.d.ts
 
+  # Playwright E2E against the real stack (Host + Postgres + ng serve) - the plan's own
+  # "critical flows: login, view queue, opt in to a provider, triage a ticket, mark resolved,
+  # role-based access, accessibility checks" list (§10), previously only runnable by hand
+  # (see e2e/README.md) and never actually exercised in CI.
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ticket_triage
+          POSTGRES_PASSWORD: ticket_triage
+          POSTGRES_DB: ticket_triage
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ticket_triage"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Host -c Release
+      - name: Start the Host against the service-container Postgres
+        run: |
+          ASPNETCORE_URLS="http://localhost:5000" ASPNETCORE_ENVIRONMENT="Development" \
+            dotnet src/Host/bin/Release/net8.0/Host.dll &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:5000/health/live && exit 0
+            sleep 1
+          done
+          echo "Host never became healthy" >&2
+          exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/apps/agent-console/package-lock.json
+      - run: npm ci
+        working-directory: frontend/apps/agent-console
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend/apps/agent-console
+      - name: Start the Angular dev server
+        working-directory: frontend/apps/agent-console
+        run: |
+          npx ng serve --port 4200 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:4200/ && exit 0
+            sleep 1
+          done
+          echo "ng serve never became healthy" >&2
+          exit 1
+      - run: npx playwright test
+        working-directory: frontend/apps/agent-console
+
   infra-plan:
     runs-on: ubuntu-latest
     steps:
