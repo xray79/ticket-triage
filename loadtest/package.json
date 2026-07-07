@@ -1,0 +1,13 @@
+{
+  "name": "ticket-triage-loadtest",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Concurrent-ingestion load test against POST /api/tickets — see README.md.",
+  "type": "commonjs",
+  "scripts": {
+    "loadtest": "node ticket-ingestion.js"
+  },
+  "devDependencies": {
+    "autocannon": "^8.0.0"
+  }
+}
