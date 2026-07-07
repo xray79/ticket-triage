@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Identity.Application.Abstractions;
 using Identity.Domain;
@@ -30,21 +31,30 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
-        var jwtOptions = new JwtOptions();
-        configuration.GetSection(JwtOptions.SectionName).Bind(jwtOptions);
 
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(options =>
+            .AddJwtBearer();
+
+        // Bound via IOptions<JwtOptions> (the same resolution JwtTokenService uses to sign a
+        // token) rather than a plain POCO bound once at registration time — binding eagerly here
+        // and lazily there let the two diverge whenever a configuration source is layered on
+        // after this method runs (exactly what WebApplicationFactory's ConfigureAppConfiguration
+        // does in tests): the token would get signed with one key and validated against another,
+        // failing every authenticated request with 401 while login itself still succeeded.
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<JwtOptions>>((bearerOptions, jwtOptionsAccessor) =>
             {
+                var jwtOptions = jwtOptionsAccessor.Value;
+
                 // Without this, ASP.NET Core silently rewrites well-known claim types (e.g. "sub")
                 // to legacy long-form URIs on the way in, breaking any code that reads the raw
                 // JwtRegisteredClaimNames values back out of the ClaimsPrincipal.
-                options.MapInboundClaims = false;
-                options.TokenValidationParameters = new TokenValidationParameters
+                bearerOptions.MapInboundClaims = false;
+                bearerOptions.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidIssuer = jwtOptions.Issuer,
