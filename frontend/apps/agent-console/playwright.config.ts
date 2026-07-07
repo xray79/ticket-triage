@@ -1,8 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Needs the full stack running (API + Postgres + this app's dev server) — not run in CI
- * automatically, same as the backend's Testcontainers integration tests. See e2e/README.md.
+ * Needs the full stack running (API + Postgres + this app's dev server) — run against a
+ * locally-started stack for local dev (see e2e/README.md), and against a real Postgres +
+ * Host + ng serve in CI's `e2e` job.
  */
 export default defineConfig({
   testDir: './e2e',
