@@ -1,12 +1,9 @@
 // @ts-check
 const eslint = require('@eslint/js');
-const tseslint = require('@typescript-eslint/eslint-plugin');
-const tsParser = require('@typescript-eslint/parser');
-const angular = require('@angular-eslint/eslint-plugin');
-const angularTemplate = require('@angular-eslint/eslint-plugin-template');
-const angularTemplateParser = require('@angular-eslint/template-parser');
+const tseslint = require('typescript-eslint');
+const angular = require('angular-eslint');
 
-module.exports = [
+module.exports = tseslint.config(
   {
     ignores: [
       'dist/**',
@@ -18,8 +15,9 @@ module.exports = [
   },
   {
     files: ['**/*.ts'],
+    extends: [eslint.configs.recommended, ...tseslint.configs.recommended, ...angular.configs.tsRecommended],
+    processor: angular.processInlineTemplates,
     languageOptions: {
-      parser: tsParser,
       parserOptions: {
         project: ['./tsconfig.app.json', './tsconfig.spec.json'],
         tsconfigRootDir: __dirname
@@ -40,28 +38,21 @@ module.exports = [
         expect: 'readonly'
       }
     },
-    plugins: {
-      '@typescript-eslint': tseslint,
-      '@angular-eslint': angular
-    },
     rules: {
-      ...eslint.configs.recommended.rules,
-      ...tseslint.configs.recommended.rules,
       '@angular-eslint/directive-selector': ['error', { type: 'attribute', prefix: 'app', style: 'camelCase' }],
       '@angular-eslint/component-selector': ['error', { type: 'element', prefix: 'app', style: 'kebab-case' }],
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }]
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      // angular-eslint 22's tsRecommended preset newly enables these two, which would require
+      // refactoring every constructor-DI call site to inject() and auditing every component's
+      // change-detection strategy — a real, worthwhile modernization, but a separate deliberate
+      // effort from this dependency upgrade, not an incidental side effect of one.
+      '@angular-eslint/prefer-inject': 'off',
+      '@angular-eslint/prefer-on-push-component-change-detection': 'off'
     }
   },
   {
     files: ['**/*.html'],
-    languageOptions: {
-      parser: angularTemplateParser
-    },
-    plugins: {
-      '@angular-eslint/template': angularTemplate
-    },
-    rules: {
-      ...angularTemplate.configs.recommended.rules
-    }
+    extends: [...angular.configs.templateRecommended],
+    rules: {}
   }
-];
+);
