@@ -64,6 +64,23 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet build TicketTriage.sln
       - uses: github/codeql-action/analyze@v3
+      - name: NuGet vulnerable package scan
+        run: |
+          dotnet restore TicketTriage.sln
+          dotnet list TicketTriage.sln package --vulnerable --include-transitive | tee vulnerable.txt
+          ! grep -q "has the following vulnerable packages" vulnerable.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/apps/agent-console/package-lock.json
+      - name: npm audit (agent-console)
+        working-directory: frontend/apps/agent-console
+        # Report-only for now: Angular 18.2's own advisories (GHSA-g93w-mfhg-p222 and others)
+        # only clear on a major-version bump to 21.x, which is a real, separate upgrade project,
+        # not something to silently force here. Non-fatal so this still surfaces in CI output.
+        run: npm ci && npm audit --omit=dev --audit-level=high
+        continue-on-error: true
 
   infra-plan:
     runs-on: ubuntu-latest
