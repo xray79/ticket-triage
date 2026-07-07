@@ -15,10 +15,11 @@ Reporting modules), **Add-on D** (a live-verified WCAG 2.1 AA accessibility pass
 ADRs, and presentation polish), stretch stage **S1** (Triage extracted into its own
 deployable, `src/TriageService/TriageService.Host` — see ADR 006), and stretch stage
 **S2** (an LLM eval harness, `tools/Triage.Eval`, scoring fixed sample tickets for
-category/priority/summary quality per provider), and stretch stage **S3** (a
+category/priority/summary quality per provider), stretch stage **S3** (a
 concurrent-ingestion load test — see
-[`docs/load-test-report.md`](docs/load-test-report.md)) — see the plan for what's
-still optional (stretch stages S4–S7).
+[`docs/load-test-report.md`](docs/load-test-report.md)), and stretch stage **S4**
+(RFCs for the decisions that had real alternatives — see [`docs/rfc`](docs/rfc)) —
+see the plan for what's still optional (stretch stages S5–S7).
 
 ## Architecture
 
@@ -334,12 +335,21 @@ harness's CI workflow (`triage-eval.yml`) wasn't run live for the same
 Docker-image-pull reason. The load test could only exercise the synchronous ticket-
 creation path — SQS queue depth, Ollama latency under concurrency, and the cloud
 provider circuit breaker weren't observable here for the same reasons (see
-`docs/load-test-report.md`'s "Scope and limitations"). Stretch stages S4–S7 are not
+`docs/load-test-report.md`'s "Scope and limitations"). Stretch stages S5–S7 are not
 started.
+
+**Stretch stage S4 (RFCs for decisions with real alternatives):** [`docs/rfc`](docs/rfc)
+has three — redact-then-triage vs. triage-raw-and-redact-only-on-cloud-escalation
+(the plan's own named example), synchronous inline triage vs. the outbox+async design
+actually used, and how org policy/a per-ticket request/a user's standing provider
+preference should resolve when they disagree. Each walks through the real
+alternatives and their tradeoffs before landing on a recommendation — distinct from
+an ADR, which records the outcome; an RFC shows the reasoning that got there.
 
 ## ADRs
 
 See [`docs/adr`](docs/adr) for the reasoning behind the modular monolith, local-first
 LLM strategy, PII redaction approach, branching strategy, the graceful-fallback
 pattern used for optional infrastructure (Redis, SMTP), and extracting Triage into
-its own deployable.
+its own deployable. See [`docs/rfc`](docs/rfc) for the RFCs written for decisions that
+had genuine alternatives worth walking through explicitly.
